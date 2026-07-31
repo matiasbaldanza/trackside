@@ -30,11 +30,20 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
+# env files -- the example is committed, real values are never
 .env*
+!.env.example
 
 # vercel
 .vercel
+
+# scratch notes, exports, screenshots and other working artefacts.
+# The README explaining the convention is tracked; nothing else here is.
+docs/untracked/*
+!docs/untracked/README.md
+
+# dataset exports
+/exports
 
 # typescript
 *.tsbuildinfo
