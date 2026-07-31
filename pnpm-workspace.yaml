@@ -1,0 +1,7 @@
+## Build scripts must be approved explicitly under pnpm 10+.
+## Both entries below are transitive dependencies of the Next.js toolchain:
+##   sharp         - image processing used by Next's image optimizer
+##   unrs-resolver - module resolution used by eslint-config-next
+allowBuilds:
+  sharp: true
+  unrs-resolver: true
