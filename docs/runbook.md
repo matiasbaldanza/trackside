@@ -127,8 +127,7 @@ outage for the time it takes to deploy.
 
 ## 3. Cross-origin configuration
 
-> **Partially verified 2026-07-31.** The failure mode below was observed; the fix has not yet been
-> applied.
+> **Verified 2026-07-31.** Both the failure mode and the fix were observed.
 
 A browser calling the Content Lake from a page is subject to CORS, so every origin that hosts the
 Studio or makes browser-side requests must be registered. The public schedule is unaffected — it

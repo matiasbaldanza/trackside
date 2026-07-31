@@ -7,7 +7,7 @@ actually happened stays visible rather than being rewritten.
 
 ---
 
-## Milestone 1 — Foundation ✅ / 🟨
+## Milestone 1 — Foundation ✅
 
 **Outcome:** The repository stands up: instructions, decision records, roadmap, and a Next.js
 application with Sanity Studio embedded and reachable.
@@ -18,18 +18,22 @@ application with Sanity Studio embedded and reachable.
 - [x] Initialise the repository and the Next.js application (TypeScript, App Router, Tailwind 4).
 - [x] `AGENTS.md`, `CLAUDE.md` pointing at it, and the `docs/` skeleton.
 - [x] ADR template, index, and ADR-0001.
-- [ ] Install and configure Sanity; mount the Studio at `/studio`.
-- [ ] Validate environment variables in one module.
+- [x] Install and configure Sanity; mount the Studio at `/studio`.
+- [x] Validate environment variables in one module.
+- [x] Provision the Sanity project; verify the dataset reads without credentials.
 
-**Validation:** `pnpm build` and `pnpm lint` succeed; `/studio` loads and authenticates.
+**Validation:** `pnpm typecheck` and `pnpm lint` clean. `/` and `/studio` both return 200. The
+Studio boots in a browser, authenticates, and reports an empty schema.
 
-**Documentation:** `AGENTS.md`, `README.md`, `docs/roadmap.md`, ADR-0001.
+**Documentation:** `AGENTS.md`, `README.md`, `docs/roadmap.md`, ADR-0001, runbook sections 1–3
+(verified).
 
-**Exit criteria:** A contributor can clone the repository, run one command, and reach both the
+**Exit criteria:** ✅ A contributor can clone the repository, run one command, and reach both the
 application and the Studio.
 
-**Commit boundaries:** `chore: initialise repository` · `docs: add project instructions and
-decision records` · `feat(sanity): embed studio in the application`
+**What was learned:** Importing `sanity.config.ts` from a Server Component breaks the build under
+Next 16 — the `react-server` export condition resolves `swr` to a build without the default export
+Sanity imports. The Studio needs an explicit client boundary. Recorded in `docs/architecture.md`.
 
 ---
 
