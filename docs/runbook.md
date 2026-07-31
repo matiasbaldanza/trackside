@@ -127,13 +127,19 @@ outage for the time it takes to deploy.
 
 ## 3. Cross-origin configuration
 
-> **Unverified.** Not yet executed.
+> **Partially verified 2026-07-31.** The failure mode below was observed; the fix has not yet been
+> applied.
 
 A browser calling the Content Lake from a page is subject to CORS, so every origin that hosts the
-Studio or makes browser-side requests must be registered. This is the most common first-run
-failure and it presents as an opaque network error rather than a useful message.
+Studio or makes browser-side requests must be registered. The public schedule is unaffected — it
+reads content on the server — so this applies to the Studio alone.
 
-Under **API → CORS origins**, add:
+**Symptom when it is missing:** the Studio loads and renders, then shows *"Connect this Studio to
+your project — this Studio isn't connected to your project yet"* with an **Add CORS origin**
+button. Using that button is the quickest fix: it registers the current origin against the project
+you are signed in to, without leaving the page.
+
+To do it from the console instead, under **API → CORS origins**, add:
 
 | Origin | Allow credentials | Why |
 | --- | --- | --- |

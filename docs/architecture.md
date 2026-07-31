@@ -6,8 +6,44 @@
 
 ## System shape
 
-_To be written in Milestone 1._ The Next.js application, the embedded Studio, and Sanity's hosted
-Content Lake; what runs where, and what crosses the network.
+Three parts:
+
+- **The Next.js application** — the public schedule, rendered on the server, deployed to Vercel.
+- **Sanity Studio** — the editorial interface, served by that same application at `/studio`. See
+  [ADR-0001](./decisions/0001-embed-sanity-studio-in-the-next-application.md).
+- **Sanity's Content Lake** — where content actually lives. A managed service with no self-hosted
+  equivalent; the Studio and the application are both clients of it.
+
+The application reads content on the server, so a visitor's browser never talks to the Content
+Lake. The Studio, running in the editor's browser, does — which is why its origin must be
+registered for CORS while the public site needs no such registration.
+
+### The Studio's client boundary
+
+The Studio is rendered through an explicit `"use client"` boundary
+(`src/app/studio/[[...tool]]/Studio.tsx`) rather than directly from the route's page component.
+This is not stylistic.
+
+Importing `sanity.config.ts` from a Server Component pulls the entire `sanity` package into the
+React Server Components graph. Under the `react-server` export condition, some of its dependencies
+resolve to server-only builds — `swr` exports no default there, which Sanity's validation
+utilities import as one — and the route fails to compile:
+
+```
+Export default doesn't exist in target module
+  import useSWR from "swr";
+```
+
+Moving the config import behind a client boundary keeps the Studio's module graph in the client
+layer, where it belongs. The Studio is a client application; the boundary is drawn where the truth
+already was.
+
+### Environment
+
+All environment access goes through `src/lib/env.ts`, which validates on read and fails with a
+message naming the missing variable. `sanity.cli.ts` is the single deliberate exception: the CLI
+runs in plain Node without Next.js module resolution, and a missing value there breaks a
+developer's command rather than a visitor's request.
 
 ## Content model
 

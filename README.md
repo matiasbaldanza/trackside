@@ -16,12 +16,12 @@ Seeded content describes **Nodo Conf**, a fictional two-day conference in Buenos
 
 What works today:
 
-- A Next.js 16 application (App Router, React 19, TypeScript, Tailwind 4) that builds and serves
-  an empty page.
+- A Next.js 16 application (App Router, React 19, TypeScript, Tailwind 4) serving an empty page.
+- Sanity Studio, running at `/studio`, connected to a Sanity project.
 - Project instructions, roadmap, and decision records.
 
-Not built yet: the content model, the schedule, the Studio, and everything else in
-[`docs/roadmap.md`](./docs/roadmap.md).
+The Studio has no schema yet, so there is nothing to edit and nothing to display. The content
+model, the schedule, and everything else are in [`docs/roadmap.md`](./docs/roadmap.md).
 
 This section is updated at every milestone and at any commit that changes what the project can do.
 
@@ -33,10 +33,15 @@ Requires **Node 22+** and **pnpm**.
 
 ```bash
 pnpm install
+cp .env.example .env.local   # then set NEXT_PUBLIC_SANITY_PROJECT_ID
 pnpm dev
 ```
 
-Serves `http://localhost:3000`. No credentials are needed yet, because nothing reads content yet.
+- `http://localhost:3000` — the application
+- `http://localhost:3000/studio` — Sanity Studio
+
+Reading published content needs no credentials. Using the Studio requires a Sanity project and its
+origin registered for CORS; both are covered in [`docs/runbook.md`](./docs/runbook.md).
 
 ---
 
