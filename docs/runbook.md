@@ -7,13 +7,12 @@ Operational procedures. Each one states what it changes and how to confirm it wo
 
 ## 1. Provisioning a Sanity project
 
-> **Unverified.** Written from Sanity's documentation; not yet executed. Confirm each step against
-> what actually happens and correct this section, then remove this notice.
+> **Verified 2026-07-31**, except where noted per step.
 
 Sanity's Content Lake is a managed service — there is no self-hosted equivalent — so the project
 must be created in Sanity's console before anything in this repository can read or write content.
 
-**Requires:** a Sanity account (a free account is sufficient).
+**Requires:** a Sanity account.
 
 ### 1.1 Create the project
 
@@ -22,7 +21,6 @@ At [sanity.io/manage](https://www.sanity.io/manage), create a new project:
 | Field | Value |
 | --- | --- |
 | Project name | `trackside` |
-| Plan | Free |
 | Dataset name | `production` |
 | Visibility | **Public** |
 
@@ -32,13 +30,39 @@ drafts: the Content Lake keeps any document whose `_id` contains a dot private r
 dataset visibility, and every draft is stored as `drafts.<id>`. Reading unpublished content still
 requires authentication.
 
-The Free plan permits two datasets and only public ones. The second is left unallocated for now; a
-`development` dataset is worth creating only once there is content worth not disturbing.
+### 1.2 Stay inside the Free plan's limits
 
-### 1.2 Record the project ID
+New projects begin on a 30-day Growth trial, which offers private datasets, more webhooks, and
+additional seats. **This project deliberately uses none of that**, because when the trial lapses
+the project falls back to Free and anything built on a trial-only capability would break at that
+point — a month after it was written, with no obvious cause.
 
-Copy the project ID from the project's dashboard — an eight-character string such as `k7f2p9qz`,
-not the project name.
+The constraints this project holds itself to, which are the Free plan's:
+
+| | Free plan | Used here |
+| --- | --- | --- |
+| Datasets | 2, public only | 1 (`production`) |
+| Documents | 10,000 | ~60 |
+| GROQ webhooks | 2 | 1 |
+| API requests | 250k/month + 1M CDN | Well within |
+| Assets | 100 GB | Speaker portraits only |
+
+The second dataset is left unallocated. A `development` dataset is worth creating only once there
+is content worth not disturbing.
+
+### 1.3 Ignore the "Getting started" scaffolding
+
+The console's guided setup creates a monorepo with the Studio and the web application in separate
+folders, and its agent prompt advises keeping the Studio standalone. That arrangement is a
+reasonable default and it is not the one used here — see
+[ADR-0001](./decisions/0001-embed-sanity-studio-in-the-next-application.md), which records why,
+and what the vendor's default is optimising for that this project is not.
+
+Running those commands against an existing repository would nest a second application inside it.
+
+### 1.4 Record the project ID
+
+Copy the project ID from the project's dashboard — an eight-character string, not the project name.
 
 ```bash
 cp .env.example .env.local
@@ -47,15 +71,20 @@ cp .env.example .env.local
 Set `NEXT_PUBLIC_SANITY_PROJECT_ID` in `.env.local` to that value.
 
 The project ID is not a secret. It is exposed to the browser by design, and reaching content with
-it is limited by dataset visibility and CORS — see step 3.
+it is bounded by dataset visibility and CORS — see step 3.
 
-**Verify:** the ID appears in the dataset's API URL shown in the console.
+### 1.5 Confirm the dataset is readable without credentials
 
-### 1.3 Alternative: create the project from the CLI
+This is the property the whole local-development story rests on, so check it rather than assume it:
 
-`pnpm dlx sanity@latest init` will authenticate, create a project and dataset, and offer to write
-environment variables. It reaches the same result. The console is documented above because its
-steps are visible and correctable; the CLI's are not.
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' \
+  "https://<projectId>.api.sanity.io/v2026-07-31/data/query/production?query=*%5B0%5D%7B_id%7D"
+```
+
+`200` means published content reads without a token. `401` means the dataset is private — change
+its visibility to public under **Datasets**, or the reproduction steps in the README will not work
+for anyone but you.
 
 ---
 

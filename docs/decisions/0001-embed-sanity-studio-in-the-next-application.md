@@ -42,6 +42,26 @@ editorial tooling in front of them. Against: Studio dependencies are present in 
 dependency tree, and the Studio route must be excluded from the public site's assumptions about
 layout, metadata, and caching.
 
+## The vendor's default points the other way
+
+Sanity's own guided setup scaffolds a monorepo with the Studio and the web application as separate
+projects, and instructs explicitly that the Studio should not be embedded in the Next.js
+application. That is a considered recommendation from the people who maintain the tool, and
+disagreeing with it deserves a stated reason rather than silence.
+
+The recommendation optimises for a Studio with a lifecycle of its own: maintained by a different
+team, released on a different cadence, or serving more than one front end. Under those conditions
+the coupling described above is a liability rather than a convenience.
+
+None of those conditions hold here. There is one front end, one release cadence, and a schema
+whose validation rules encode scheduling constraints that the public schedule reads directly.
+Splitting the repository would put a review boundary through the middle of changes that are single
+changes. Embedding remains fully supported — `next-sanity` exists for exactly this — so the
+divergence costs support, not capability.
+
+If any of those conditions later become true, this ADR should be revisited on that basis rather
+than on the strength of the default.
+
 ## Consequences
 
 - One deployment target and one set of environment variables.
