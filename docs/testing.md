@@ -38,8 +38,8 @@ test suites above.
 ## To be checked by hand
 
 Some behaviour is not worth automating here, and pretending otherwise would produce tests that
-assert the implementation rather than the behaviour. **None of the following has been run yet** —
-each is planned for the milestone noted, and results are recorded below once they exist.
+assert the implementation rather than the behaviour. Ticked items have been run and their results
+are recorded below; unticked ones are planned for the milestone noted and have **not** been run.
 
 - ✅ Studio validation as an editor experiences it — whether the message explains the conflict,
   and whether warnings stay out of the way. _Verified 2026-08-01, see below._

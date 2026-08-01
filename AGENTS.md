@@ -203,26 +203,19 @@ Treated as an architectural concern, not a final pass.
 
 ## Commands
 
-Available now:
+Every script, with what it writes and what it costs to run, is in
+**[`docs/scripts.md`](docs/scripts.md)** — the canonical list. The ones used constantly:
 
 ```bash
-pnpm dev              # Next app on / and Sanity Studio on /studio
-pnpm build            # production build
-pnpm lint             # eslint
-pnpm typecheck        # tsc --noEmit
-pnpm schema:extract   # schema.json      (commit the result)
-pnpm types:generate   # sanity.types.ts  (commit the result)
-pnpm schema:check     # regenerate both and fail on a diff
-pnpm migration:create # scaffold a content migration
-pnpm migration:run    # dry run by default; --no-dry-run to apply
-pnpm test             # unit tests
-pnpm seed             # write fixture content
-pnpm content:reset    # delete and rewrite it; dry run by default
-pnpm content:export   # back up the dataset — required before any reset
+pnpm dev          # app on / and Studio on /studio
+pnpm typecheck    # tsc --noEmit
+pnpm lint         # eslint
+pnpm test         # unit tests
+pnpm schema:check # regenerate schema.json and sanity.types.ts, fail on a diff
 ```
 
-Anything destructive dries-run by default. `content:reset` and `migration:run` both need
-`-- --no-dry-run` to act, because a destructive command whose default is to destroy will
+**Anything destructive dries-run by default.** `content:reset` and `migration:run` both report and
+exit unless given `-- --no-dry-run`, because a destructive command whose default is to destroy will
 eventually be run by accident.
 
 Operational procedures — provisioning, tokens, CORS, backup and restore, content migrations,
@@ -236,6 +229,7 @@ webhook configuration, deployment, and incident handling — are in `docs/runboo
 | --- | --- |
 | `README.md` | What the project is and how to run it |
 | `docs/roadmap.md` | Living roadmap, milestone by milestone |
+| `docs/scripts.md` | Every pnpm script, what it writes, what it costs |
 | `docs/architecture.md` | How the system fits together, and why |
 | `docs/decisions/` | Architecture Decision Records |
 | `docs/testing.md` | What is tested automatically, and what is verified by hand |

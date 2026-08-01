@@ -57,6 +57,7 @@ origin registered for CORS; both are covered in [`docs/runbook.md`](./docs/runbo
 | --- | --- |
 | [`AGENTS.md`](./AGENTS.md) | Canonical contributor and agent instructions |
 | [`docs/roadmap.md`](./docs/roadmap.md) | Living roadmap — planned work and its status |
+| [`docs/scripts.md`](./docs/scripts.md) | Every `pnpm` script, what it writes, what it costs |
 | [`docs/decisions/`](./docs/decisions/) | Architecture Decision Records |
 | [`docs/architecture.md`](./docs/architecture.md) | How the system fits together, and why |
 | [`docs/testing.md`](./docs/testing.md) | What is tested automatically, what is verified by hand |
