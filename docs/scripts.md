@@ -9,8 +9,8 @@ two copies of the same table drift, and a reader cannot tell which is authoritat
 
 | | Meaning |
 | --- | --- |
-| 🟢 | Safe. Reads or builds only. |
-| 🟡 | Writes to the repository. Reviewable as a diff. |
+| 🟢 | Safe. Reads, or writes only build output. |
+| 🟡 | Writes files you will see — tracked sources, or archives on disk. |
 | 🔴 | Writes to the dataset. Affects content other people can see. |
 | 🔑 | Requires `pnpm exec sanity login` — once per machine. |
 
@@ -23,6 +23,7 @@ two copies of the same table drift, and a reader cannot tell which is authoritat
 | `pnpm dev` | 🟢 | Serves the application on `http://localhost:3000` and Sanity Studio on `/studio`. |
 | `pnpm build` | 🟢 | Production build. |
 | `pnpm start` | 🟢 | Serves a build produced by `pnpm build`. |
+| `pnpm test:watch` | 🟢 | Unit tests, watching. Long-running, so it belongs here rather than with the checks that run in CI. |
 
 ## Checks
 
@@ -33,7 +34,6 @@ Everything here runs in continuous integration. All of it should pass before a p
 | `pnpm typecheck` | 🟢 | `tsc --noEmit`. |
 | `pnpm lint` | 🟢 | ESLint. |
 | `pnpm test` | 🟢 | Unit tests, once. |
-| `pnpm test:watch` | 🟢 | Unit tests, watching. |
 | `pnpm schema:check` | 🟡 | Regenerates `schema.json` and `sanity.types.ts` and **fails if either differs from what is committed**. This is what stops a schema change from silently failing to propagate. It stages nothing permanently, but it does rewrite the two generated files. |
 
 ## Schema and types
@@ -55,7 +55,7 @@ These touch the dataset. Read [runbook §4, §4a and §5](./runbook.md) before u
 | Script | | What it does |
 | --- | --- | --- |
 | `pnpm seed` | 🔴 🔑 | Writes the Nodo Conf fixture programme — 49 documents — into the dataset named by `NEXT_PUBLIC_SANITY_DATASET`. Idempotent: stable ids and `createOrReplace`, one transaction. **Only writes.** Documents no longer in the fixture set, and drafts, survive. |
-| `pnpm content:export` | 🟢 🔑 | Archives the dataset with its assets to `exports/<dataset>-<timestamp>.tar.gz`, which is git-ignored. **Required before any reset or non-dry-run migration** — it is the only rollback there is. |
+| `pnpm content:export` | 🟡 🔑 | Archives the dataset named in `.env.local`, with its assets, to `exports/<dataset>-<timestamp>.tar.gz`, which is git-ignored. **Required before any reset or non-dry-run migration** — it is the only rollback there is. Wrapped in `scripts/export.sh`, which reads `.env.local` itself and checks the archive exists afterwards. |
 | `pnpm content:reset` | 🔴 🔑 | **Dry run by default.** Reports how many documents would be deleted, including drafts, and changes nothing. Add `-- --no-dry-run` to delete the four fixture-managed types and write the programme again. |
 
 ```bash
@@ -89,9 +89,14 @@ cannot show you a whole class of failure — documents that exist but are unread
 without credentials.
 
 ```bash
-curl -s --get "https://<projectId>.api.sanity.io/v2026-07-31/data/query/production" \
+source .env.local
+curl -s --get "https://$NEXT_PUBLIC_SANITY_PROJECT_ID.api.sanity.io/v2026-07-31/data/query/$NEXT_PUBLIC_SANITY_DATASET" \
   --data-urlencode 'query=count(*[_type=="session"])'
 ```
+
+The dataset comes from `.env.local`, the same place every content script reads it from. Hard-coding
+a dataset name in a verification command means eventually verifying one dataset and having changed
+another.
 
 This is not hypothetical. A seeding run once reported complete success, wrote all 49 documents, and
 produced a dataset the public could not read at all — because the ids contained dots. The Studio
