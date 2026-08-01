@@ -21,7 +21,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "seed": "sanity exec scripts/seed.ts --with-user-token",
-    "content:export": "sanity dataset export production exports/production-$(date +%Y%m%d-%H%M%S).tar.gz"
+    "content:export": "sanity dataset export production exports/production-$(date +%Y%m%d-%H%M%S).tar.gz",
+    "content:reset": "sanity exec scripts/reset.ts --with-user-token"
   },
   "dependencies": {
     "@sanity/client": "^7.26.0",

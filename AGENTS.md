@@ -216,13 +216,14 @@ pnpm schema:check     # regenerate both and fail on a diff
 pnpm migration:create # scaffold a content migration
 pnpm migration:run    # dry run by default; --no-dry-run to apply
 pnpm test             # unit tests
+pnpm seed             # write fixture content
+pnpm content:reset    # delete and rewrite it; dry run by default
+pnpm content:export   # back up the dataset — required before any reset
 ```
 
-Not implemented yet — do not reference these as if they work:
-
-```bash
-pnpm seed             # load fixture content  (Milestone 3)
-```
+Anything destructive dries-run by default. `content:reset` and `migration:run` both need
+`-- --no-dry-run` to act, because a destructive command whose default is to destroy will
+eventually be run by accident.
 
 Operational procedures — provisioning, tokens, CORS, backup and restore, content migrations,
 webhook configuration, deployment, and incident handling — are in `docs/runbook.md`.

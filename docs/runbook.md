@@ -214,6 +214,86 @@ documents were written, the Studio showed the full conference — and the public
 nothing. The failure is completely silent from an authenticated seat. Fixture ids now use hyphens,
 and a test enforces it.
 
+## 4a. Resetting the programme
+
+> **Verified 2026-08-01.** Dry run and real run both executed.
+
+Seeding only writes. It replaces the documents in the fixture set and leaves everything else
+alone, so a session deleted from the fixtures, or a draft created by editing in the Studio, will
+still be there afterwards. Resetting removes the fixture-managed documents first.
+
+```bash
+pnpm content:export                   # required first -- this is the only rollback
+pnpm content:reset                    # dry run: reports, changes nothing
+pnpm content:reset -- --no-dry-run    # actually does it
+```
+
+**Dry run is the default**, mirroring `sanity migrations run`. A destructive command whose default
+is to destroy will eventually be run by accident, and matching a convention the project already
+uses is one fewer thing to remember.
+
+The dry run reports what would go, including how many are drafts:
+
+```text
+6rj0xvsm/production
+  would delete : 50 documents (1 drafts)
+  would write  : 1 event · 4 rooms · 18 speakers · 26 sessions
+  types touched: event, track, speaker, session
+```
+
+Drafts are included deliberately. Deleting only published documents leaves `drafts.*` counterparts
+behind, and they reappear in the Studio as unpublished edits to documents that no longer exist.
+
+Only `event`, `track`, `speaker` and `session` are touched. Nothing else in the dataset is
+affected, which is why this is preferable to deleting and recreating the dataset.
+
+**Verify** against the public API, not the Studio — the Studio is authenticated and cannot show
+this class of failure:
+
+```bash
+curl -s --get "https://<projectId>.api.sanity.io/v2026-07-31/data/query/production" \
+  --data-urlencode 'query=count(*[_type=="session"])'
+```
+
+Expect `26`.
+
+### Doing it by hand
+
+If the script is unavailable or you want to see each step:
+
+```bash
+pnpm exec sanity documents query '*[_type in ["event","track","speaker","session"]]._id' \
+  --api-version 2026-07-31 \
+  | sed -n '/^\[/,$p' \
+  | python3 -c "import sys,json;print('\n'.join(json.load(sys.stdin)))" \
+  | xargs -n 10 ./node_modules/.bin/sanity documents delete --dataset production
+
+pnpm seed
+```
+
+Two things that are not obvious:
+
+- **`--api-version` is required on `query`.** Without it the CLI prints a warning line to stdout
+  that breaks JSON parsing.
+- **`xargs -n 10` is not optional.** Passing every id as a single shell word makes the CLI treat
+  the whole string as one document id and reject it.
+
+### Starting the dataset over completely
+
+Heavier, and it discards document history along with the content:
+
+```bash
+pnpm exec sanity dataset delete production
+pnpm exec sanity dataset create production --visibility public
+pnpm seed
+```
+
+CORS origins are configured per project, so they survive. **`--visibility public` is not
+optional** — a private dataset breaks anonymous reads, and the symptom is identical to the
+dotted-id failure above: the Studio looks complete, the public API returns nothing.
+
+---
+
 ## 5. Backup and restore
 
 > **Export verified 2026-08-01. Restore unverified** — the export has not yet been imported back.

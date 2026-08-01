@@ -1,8 +1,6 @@
 /**
  * Load the Nodo Conf fixture programme into a dataset.
  *
- * Run with the Sanity CLI, which supplies an authenticated client:
- *
  *     pnpm seed
  *
  * Idempotent. Documents have stable ids derived from their slugs and are
@@ -10,13 +8,18 @@
  * duplicates. That matters more than it sounds: a seed script that can only
  * be run once is a script nobody dares run.
  *
- * Only published documents are written. Seeding drafts would leave every
- * document in an unpublished state, and the point of the fixture set is to
- * have a programme the public schedule can actually read.
+ * This only ever writes. It does not remove documents that are no longer in
+ * the fixture set — `pnpm content:reset` does that, separately and with a dry
+ * run, because deleting is a different kind of operation and should not be a
+ * side effect of seeding.
+ *
+ * Only published documents are written. Seeding drafts would leave everything
+ * unpublished, and the point of the fixture set is a programme the public
+ * schedule can actually read.
  */
 import { getCliClient } from "sanity/cli";
 
-import { fixtureDocuments, fixtureSummary } from "../fixtures/nodo-conf";
+import { describeFixtures, writeProgramme } from "./lib/programme";
 
 /**
  * The client is requested rather than assumed to be in scope. `sanity exec`
@@ -26,26 +29,14 @@ import { fixtureDocuments, fixtureSummary } from "../fixtures/nodo-conf";
 const client = getCliClient();
 
 async function seed() {
-  const dataset = client.config().dataset;
-  const projectId = client.config().projectId;
+  const { projectId, dataset } = client.config();
 
-  console.log(`\nSeeding ${fixtureDocuments.length} documents into ${projectId}/${dataset}`);
-  console.log(
-    `  ${fixtureSummary.event} event · ${fixtureSummary.rooms} rooms · ` +
-      `${fixtureSummary.speakers} speakers · ${fixtureSummary.sessions} sessions\n`,
-  );
+  console.log(`\nSeeding into ${projectId}/${dataset}`);
+  console.log(`  ${describeFixtures()}\n`);
 
-  // One transaction: either the whole programme lands or none of it does.
-  // A partial programme is worse than no programme, because references would
-  // dangle and the schedule would render half a conference.
-  const transaction = fixtureDocuments.reduce(
-    (tx, doc) => tx.createOrReplace(doc),
-    client.transaction(),
-  );
+  const written = await writeProgramme(client);
 
-  await transaction.commit({ visibility: "async" });
-
-  console.log("Done. Open /studio to see the programme.\n");
+  console.log(`Wrote ${written} documents. Open /studio to see the programme.\n`);
 }
 
 seed().catch((error) => {
