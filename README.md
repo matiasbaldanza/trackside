@@ -22,9 +22,11 @@ What works today:
 - Validation that refuses an impossible programme — two sessions cannot share a room at the same
   time, and a session cannot fall outside the conference — while letting an unfinished one be
   saved and published.
-- 42 unit tests over the scheduling logic.
+- A complete fixture programme for Nodo Conf — 26 sessions across two days in four rooms — loaded
+  with `pnpm seed`.
+- 61 unit tests over the scheduling logic and the fixture programme.
 
-There is no public schedule yet, and no content to put in one. Both are in
+There is no public schedule yet. It is the next milestone in
 [`docs/roadmap.md`](./docs/roadmap.md).
 
 This section is updated at every milestone and at any commit that changes what the project can do.

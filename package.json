@@ -19,7 +19,9 @@
     "migration:create": "sanity migration create",
     "migration:run": "sanity migration run",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "seed": "sanity exec scripts/seed.ts --with-user-token",
+    "content:export": "sanity dataset export production exports/production-$(date +%Y%m%d-%H%M%S).tar.gz"
   },
   "dependencies": {
     "@sanity/client": "^7.26.0",

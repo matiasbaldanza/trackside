@@ -93,38 +93,46 @@ for anyone but you.
 
 ## 2. Tokens
 
-> **Unverified.** Not yet executed.
+Most operations here need no token at all.
 
-Reading published content needs no token. Tokens are needed for two things: writing content
-(seeding, content migrations) and reading unpublished drafts (preview).
+**Reading published content** needs nothing — the dataset is public.
 
-Create tokens under **API → Tokens** in the project console, or from the CLI:
+**Writing content** — seeding, dataset export, content migrations — authenticates the signed-in
+developer through the CLI. One step, once per machine:
 
 ```bash
-pnpm dlx sanity@latest tokens create "trackside seed" --role editor
-pnpm dlx sanity@latest tokens create "trackside preview" --role viewer
+pnpm exec sanity login
 ```
 
-On the Free plan the available roles are `viewer`, `editor`, and `deploy-studio`.
+**There is deliberately no write token.** One would sit unused in an environment file, which is a
+liability with nothing to show for it. If a non-interactive context ever needs to write —
+continuous integration seeding a preview dataset, say — that is the point at which to create one,
+and to record why here.
+
+**Reading unpublished drafts** for preview is the only case that needs a token, because it runs on
+a deployed server where no developer is signed in. Create it under **API → Tokens**, or:
+
+```bash
+pnpm exec sanity tokens create "trackside preview" --role viewer
+```
+
+On the Free plan the available roles are `viewer`, `editor` and `deploy-studio`. This one is
+`viewer`: it reads drafts, and it must not be able to write.
 
 | Token | Role | Purpose | Lives in |
 | --- | --- | --- | --- |
-| `trackside seed` | `editor` | Seeding, exports, content migrations | `.env.local` as `SANITY_API_WRITE_TOKEN` |
 | `trackside preview` | `viewer` | Reading drafts for preview | `.env.local` as `SANITY_API_READ_TOKEN`, and the deployment's environment |
 
 **The token value is shown once.** If it is lost, revoke it and create another; there is no way to
 read it back.
 
-Neither token is ever exposed to the browser. Both are read only in server code, and neither
-carries the `NEXT_PUBLIC_` prefix — that prefix is what determines whether Next.js inlines a value
-into the client bundle, so the naming is the safeguard, not a convention.
+It is never exposed to the browser: it is read only in server code, and does not carry the
+`NEXT_PUBLIC_` prefix — that prefix is what determines whether Next.js inlines a value into the
+client bundle, so the naming is the safeguard, not a convention.
 
 **Rotation:** create the replacement first, update `.env.local` and the deployment environment,
-confirm the system still works, and only then revoke the old token. Revoking first causes an
-outage for the time it takes to deploy.
-
-**Verify:** a token works if `pnpm seed` writes successfully (once that script exists — Milestone
-3).
+confirm the system still works, and only then revoke the old one. Revoking first causes an outage
+for as long as a deploy takes.
 
 ---
 
@@ -163,8 +171,27 @@ production — the public schedule itself is unaffected, because it is rendered 
 
 ## 4. Seeding content
 
-_Unverified — Milestone 3._ Loading fixture content into a dataset, and targeting a dataset other
-than the default.
+> **Unverified.** The script is written and type-checks; it has not yet been run against a
+> dataset, because doing so requires an interactive `sanity login`.
+
+```bash
+pnpm exec sanity login   # once per machine
+pnpm seed
+```
+
+Loads one event, four rooms, 18 speakers and 26 sessions into the dataset named by
+`NEXT_PUBLIC_SANITY_DATASET` in `.env.local`. To target a different dataset, change that value —
+the script deliberately has no dataset argument of its own, so there is one place that decides
+which dataset a command touches.
+
+**Idempotent.** Documents have stable ids derived from their slugs and are written with
+`createOrReplace`, so a second run replaces rather than duplicates. It is also a single
+transaction: a partially seeded conference is worse than an empty one, because references dangle
+and the schedule renders half an event.
+
+**Verify:** `/studio` lists 26 sessions across two days, and no session shows a validation error.
+Some speakers will show a warning for a missing portrait or biography — that is intended, and is
+what the warning severity exists to express.
 
 ## 5. Backup and restore
 
