@@ -141,7 +141,9 @@ schedule within seconds.
 **Technical tasks**
 - `liveStatus` on sessions, and a content migration backfilling existing documents.
 - A Studio pane scoped to the current day, ordered by start time.
-- A document action that records a status change and publishes it in one step.
+- A document action that records a status change and publishes it in one step, adding
+  `liveStatus.updatedAt` at the same time — the field is deliberately absent until something
+  writes it.
 - Draft mode for reviewing an unpublished programme.
 - Cache tags split by volatility, invalidated by a signed webhook.
 

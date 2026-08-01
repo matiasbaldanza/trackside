@@ -143,11 +143,11 @@ produce, from the position of the person it is produced for.
 Recorded so the divergence is visible rather than accidental.
 
 **Document ids.** The skill says to let Sanity generate `_id` values and to reserve explicit ids
-for singletons. The fixture programme uses slug-derived ids for every document. The rule is aimed
-at documents created at runtime, where deterministic ids collide and couple content to a source
-system; fixture seeding has the opposite requirement, since stable ids are what make
-`createOrReplace` idempotent and a re-seed replace rather than duplicate. Content created by
-editors in the Studio gets generated ids as normal.
+for singletons; the fixture programme uses slug-derived ids throughout. Recorded as
+[ADR-0004](./decisions/0004-derive-fixture-document-ids-from-slugs.md), which argues the two
+alternatives that follow the guidance and states the cost of the choice — renaming a fixture slug
+creates a second document rather than renaming the first, so a rename means `content:reset`, not
+`seed`. Content created by editors in the Studio gets generated ids as normal.
 
 **Studio placement and content freshness.** Both covered by ADRs, both deliberate, both against
 the vendor default. See [ADR-0001](./decisions/0001-embed-sanity-studio-in-the-next-application.md).

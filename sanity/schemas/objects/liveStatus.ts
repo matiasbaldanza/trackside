@@ -32,6 +32,14 @@ import { defineField, defineType } from "sanity";
  * Every consumer must read `state` first. The query layer enforces this at
  * the boundary rather than trusting each call site -- see
  * `docs/architecture.md`.
+ *
+ * ## No timestamp yet
+ *
+ * There is deliberately no `updatedAt`. Attendees should be told how old a
+ * status is -- "delayed" with no timestamp is not information -- but the
+ * thing that would set it is the publish action built in Milestone 5, and a
+ * read-only field that nothing ever writes is a guarantee the schema cannot
+ * keep. It arrives with its writer.
  */
 export const liveStatus = defineType({
   name: "liveStatus",
@@ -92,18 +100,6 @@ export const liveStatus = defineType({
       type: "string",
       description:
         "Shown to attendees alongside the status. Optional, and worth writing when the reason is not obvious from the status alone.",
-    }),
-    defineField({
-      name: "updatedAt",
-      title: "Updated",
-      type: "datetime",
-      readOnly: true,
-      description:
-        "When this status was last published. Attendees are told how old a status is, because “delayed” with no timestamp is not information.",
-      // Read-only and, for now, never written: the document action that sets
-      // it alongside publishing arrives with the live operations pane in
-      // Milestone 5. Until then this field stays empty, and anything reading
-      // it must treat that as "unknown", not as "just now".
     }),
   ],
 });

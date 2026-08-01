@@ -28,7 +28,6 @@ export type LiveStatus = {
   delayMinutes?: number;
   movedToTrack?: TrackReference;
   note?: string;
-  updatedAt?: string;
 };
 
 export type Link = {

@@ -17,6 +17,7 @@ Use [`TEMPLATE.md`](./TEMPLATE.md) for new records.
 | [0001](./0001-embed-sanity-studio-in-the-next-application.md) | Embed Sanity Studio in the Next.js application | Accepted | 2026-07-31 |
 | [0002](./0002-store-a-start-instant-and-a-duration.md) | Store a start instant and a duration, and derive conference days | Accepted | 2026-08-01 |
 | [0003](./0003-split-validation-by-severity.md) | Split validation by severity, not by importance | Accepted | 2026-08-01 |
+| [0004](./0004-derive-fixture-document-ids-from-slugs.md) | Derive fixture document ids from slugs | Accepted | 2026-08-01 |
 
 ## Decisions expected but not yet made
 
