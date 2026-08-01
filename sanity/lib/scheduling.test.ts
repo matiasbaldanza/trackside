@@ -174,6 +174,28 @@ describe("isWithinEvent", () => {
   it("rejects a session that runs past the final midnight", () => {
     expect(isWithinEvent(at("2026-09-26T00:00:00Z", 181), nodoConf)).toBe(false);
   });
+
+  /**
+   * An event with no usable date range constrains nothing, and that is
+   * deliberate: the fault is the event document's, and reporting it against
+   * every session would bury one real message under twenty-six copies of an
+   * unrelated one.
+   *
+   * It does mean the out-of-bounds rule silently stops applying while the
+   * range is broken, so the range itself is validated on the event — see
+   * `endDate` in the event schema. This test exists to make the fail-open
+   * behaviour a decision rather than an accident, and to fail if someone
+   * removes that validation believing this function covers it.
+   */
+  it("constrains nothing when the event range is inverted", () => {
+    const inverted = { ...nodoConf, startDate: "2026-09-25", endDate: "2026-09-24" };
+    expect(isWithinEvent(at("2030-01-01T00:00:00Z", 60), inverted)).toBe(true);
+  });
+
+  it("constrains nothing when the event has no dates", () => {
+    const undated = { startDate: "", endDate: "", timezone: BA };
+    expect(isWithinEvent(at("2030-01-01T00:00:00Z", 60), undated)).toBe(true);
+  });
 });
 
 describe("formatDuration", () => {

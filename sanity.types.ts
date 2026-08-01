@@ -164,7 +164,7 @@ export type Event = {
   name: string;
   tagline?: string;
   startDate: string;
-  endDate?: string;
+  endDate: string;
   timezone: string;
   venueName?: string;
   city?: string;

@@ -47,6 +47,23 @@ export const event = defineType({
       options: { dateFormat: "YYYY-MM-DD" },
       description:
         "Inclusive. A two-day conference ends on its second day, not the morning after.",
+      /**
+       * An inverted range is not merely wrong, it is dangerous. Conference
+       * days are derived from this range, and a range that yields no days
+       * makes every session vacuously "inside the conference" -- so the
+       * out-of-bounds error from ADR-0003 stops firing for the whole
+       * programme, with nothing shown anywhere to say so.
+       */
+      validation: (rule) => [
+        rule.required(),
+        rule.custom((value, context) => {
+          const start = (context.document as { startDate?: string } | undefined)?.startDate;
+          if (!value || !start) return true;
+          return value >= start
+            ? true
+            : "The last day cannot come before the first. While the range is inverted, no session can be checked against the conference dates at all.";
+        }),
+      ],
     }),
     defineField({
       name: "timezone",

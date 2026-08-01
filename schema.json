@@ -928,7 +928,7 @@
         "value": {
           "type": "string"
         },
-        "optional": true
+        "optional": false
       },
       "timezone": {
         "type": "objectAttribute",
