@@ -60,8 +60,12 @@ session is rejected with a message naming the conflict.
 
 **Documentation:** ADRs on the time representation and on the validation severity split.
 
-**Exit criteria:** An editor attempting to double-book a room is blocked and told which session
-they collided with.
+**Exit criteria:** ✅ An editor attempting to double-book a room is blocked and told which session
+they collided with — verified in the Studio against real content on 2026-08-01.
+
+**What was learned:** rules attached at document level surface only in a validation panel, reduced
+to a generic sentence at the Publish button. Attaching each rule to the field it concerns is what
+makes a carefully worded message actually reach an editor.
 
 **Commit boundaries:** `feat(sanity): add conference content model` · `feat(sanity): add scheduling
 validation` · `test: cover scheduling logic`
