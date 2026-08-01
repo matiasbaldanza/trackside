@@ -10,6 +10,18 @@ Updated as work proceeds, not reconstructed at the end.
 
 Claude Code (Opus 5), driven interactively from the repository. CodeRabbit reviews pull requests.
 
+Sanity's own [`sanity-best-practices`](https://github.com/sanity-io/agent-toolkit) agent skill is
+installed locally, from commit `dfcdd28`. It is documentation only — 25 markdown files, nothing
+executable — and it is advisory: `AGENTS.md` records the precedence when it disagrees with a
+decision made here.
+
+It was added part-way through, after the content model was built, which makes its value measurable
+rather than assumed. Of the three Sanity-specific mistakes made before it was installed, it would
+have prevented one outright (`@sanity/icons` v5 subpath imports — the subject of its most recent
+commit), steered away from a second (it advises against slug-derived document ids, which is how the
+dotted-id failure arose), and missed the third entirely (`rule.warning(message)` adding no
+constraint: its examples use the correct form but never name the trap).
+
 ## Milestone 1 — Foundation
 
 ### What the agent did
@@ -125,6 +137,20 @@ and worse: **operations that reported success while achieving nothing.** `pnpm s
 The generalisation is that a tool's own success message is not evidence. What settled both cases
 was querying the public API as an anonymous reader — checking the result the system is supposed to
 produce, from the position of the person it is produced for.
+
+## Where this project diverges from vendor guidance
+
+Recorded so the divergence is visible rather than accidental.
+
+**Document ids.** The skill says to let Sanity generate `_id` values and to reserve explicit ids
+for singletons. The fixture programme uses slug-derived ids for every document. The rule is aimed
+at documents created at runtime, where deterministic ids collide and couple content to a source
+system; fixture seeding has the opposite requirement, since stable ids are what make
+`createOrReplace` idempotent and a re-seed replace rather than duplicate. Content created by
+editors in the Studio gets generated ids as normal.
+
+**Studio placement and content freshness.** Both covered by ADRs, both deliberate, both against
+the vendor default. See [ADR-0001](./decisions/0001-embed-sanity-studio-in-the-next-application.md).
 
 ## What this means for reviewing the code
 

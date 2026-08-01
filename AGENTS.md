@@ -146,6 +146,23 @@ saying what it is, which is usually the part the reader needed.
 - Work stops at milestone boundaries for human review.
 - Changes are reviewed by the repository owner, who may perform commits directly.
 
+### Precedence
+
+Guidance can conflict. When it does, this order settles it:
+
+1. **Architecture Decision Records** in `docs/decisions/`.
+2. **This file.**
+3. **Vendor guidance** — Sanity's `sanity-best-practices` agent skill, and Sanity's documentation.
+
+Vendor guidance is well-informed and worth following by default; it is not written for this
+project. Where it contradicts a recorded decision, the decision stands — ADR-0001 keeps the Studio
+embedded although the skill assumes a standalone one, and the freshness decision keeps webhook
+invalidation although the skill's Next.js guide assumes the Live Content API.
+
+**A conflict is not permission to reverse a decision quietly.** If the vendor raises an argument
+the ADR did not consider, that is a new ADR superseding the old one, with the argument written
+down. Silently drifting toward a default is how a repository loses its reasoning.
+
 ### Honesty rules
 
 - **Never claim a test, build, type check, or performance measurement passed unless it actually
