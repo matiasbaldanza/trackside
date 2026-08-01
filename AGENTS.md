@@ -99,8 +99,25 @@ common way for a project to start lying about itself. Planned work belongs in
 - **Atomic** where that creates a meaningful review boundary. A commit should be reviewable on its
   own and should not mix a refactor with a behaviour change.
 - **No `Co-authored-by` trailers.**
-- One branch and one pull request per milestone. Rebase-merge, never squash — squashing destroys
-  the commit boundaries the roadmap is built around.
+- One branch and one pull request per milestone.
+- **Merge with a merge commit. Never squash, and do not rebase-merge.** The three strategies
+  differ in what survives:
+
+  | Strategy | Atomic commits | Milestone visible in history |
+  | --- | --- | --- |
+  | Squash | Lost | Yes, but as one opaque commit |
+  | Rebase-merge | Kept | **No** — flat history, no grouping, no PR reference |
+  | Merge commit | Kept | Yes — the merge commit names the milestone and the PR |
+
+  Squashing destroys the commit boundaries the roadmap is built around. Rebase-merge keeps them
+  but discards the grouping, leaving `main` a flat sequence in which nothing marks where a
+  milestone began or ended — the record then exists only on GitHub, so a clone of the repository
+  cannot answer the question.
+
+  The merge commit is the milestone boundary. `git log --first-parent` reads as one line per
+  milestone; the full log still shows every atomic commit.
+
+- Tag each merged milestone: `git tag -a milestone-N -m "Milestone N — Name"`.
 
 ### Process
 
