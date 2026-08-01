@@ -101,8 +101,12 @@ than an empty one, because references dangle and the schedule renders half an ev
 
 The fixture content is TypeScript rather than exported JSON, at `fixtures/nodo-conf.ts`, so that a
 change to the programme is reviewable as a diff. It is checked against the same rules the Studio
-enforces in `fixtures/nodo-conf.test.ts` — seeding a dataset with content its own schema rejects
-would be a poor advertisement for the schema.
+enforces in `fixtures/nodo-conf.test.ts`, **before** anything is written.
+
+That check has to happen here because nothing else will do it. The Content Lake does not enforce
+schema validation: rules live in the Studio, and content written through the API or an import is
+accepted whether it satisfies them or not. Seeding a programme that its own schema would reject
+therefore succeeds silently, and the failure appears later as a Studio full of red.
 
 ## Common failures
 

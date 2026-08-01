@@ -12,7 +12,7 @@ Seeded content describes **Nodo Conf**, a fictional two-day conference in Buenos
 
 ## Current state
 
-**Milestone 2 — Content model, in progress.**
+**Milestones 1–3 complete. Milestone 4 — the public schedule — not started.**
 
 What works today:
 
@@ -24,7 +24,7 @@ What works today:
   saved and published.
 - A complete fixture programme for Nodo Conf — 26 sessions across two days in four rooms — loaded
   with `pnpm seed`.
-- 61 unit tests over the scheduling logic and the fixture programme.
+- 67 unit tests over the scheduling logic and the fixture programme.
 
 There is no public schedule yet. It is the next milestone in
 [`docs/roadmap.md`](./docs/roadmap.md).

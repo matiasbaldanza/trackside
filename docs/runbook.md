@@ -192,7 +192,8 @@ and the schedule renders half an event.
 happily show documents that no unauthenticated reader can see:
 
 ```bash
-curl -s --get "https://<projectId>.api.sanity.io/v2026-07-31/data/query/production" \
+source .env.local
+curl -s --get "https://$NEXT_PUBLIC_SANITY_PROJECT_ID.api.sanity.io/v2026-07-31/data/query/$NEXT_PUBLIC_SANITY_DATASET" \
   --data-urlencode 'query=count(*[_type=="session"])'
 ```
 
@@ -251,7 +252,8 @@ affected, which is why this is preferable to deleting and recreating the dataset
 this class of failure:
 
 ```bash
-curl -s --get "https://<projectId>.api.sanity.io/v2026-07-31/data/query/production" \
+source .env.local
+curl -s --get "https://$NEXT_PUBLIC_SANITY_PROJECT_ID.api.sanity.io/v2026-07-31/data/query/$NEXT_PUBLIC_SANITY_DATASET" \
   --data-urlencode 'query=count(*[_type=="session"])'
 ```
 
@@ -262,14 +264,20 @@ Expect `26`.
 If the script is unavailable or you want to see each step:
 
 ```bash
+source .env.local
+
 pnpm exec sanity documents query '*[_type in ["event","track","speaker","session"]]._id' \
-  --api-version 2026-07-31 \
+  --api-version 2026-07-31 --dataset "$NEXT_PUBLIC_SANITY_DATASET" \
   | sed -n '/^\[/,$p' \
   | python3 -c "import sys,json;print('\n'.join(json.load(sys.stdin)))" \
-  | xargs -n 10 ./node_modules/.bin/sanity documents delete --dataset production
+  | xargs -n 10 ./node_modules/.bin/sanity documents delete --dataset "$NEXT_PUBLIC_SANITY_DATASET"
 
 pnpm seed
 ```
+
+**Read the dataset from `.env.local` rather than typing it.** Every content script resolves it the
+same way, and a literal dataset name in a delete command is how you eventually verify one dataset
+having emptied another.
 
 Two things that are not obvious:
 
@@ -283,8 +291,9 @@ Two things that are not obvious:
 Heavier, and it discards document history along with the content:
 
 ```bash
-pnpm exec sanity dataset delete production
-pnpm exec sanity dataset create production --visibility public
+source .env.local
+pnpm exec sanity dataset delete "$NEXT_PUBLIC_SANITY_DATASET"
+pnpm exec sanity dataset create "$NEXT_PUBLIC_SANITY_DATASET" --visibility public
 pnpm seed
 ```
 

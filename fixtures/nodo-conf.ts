@@ -11,10 +11,11 @@
  * workshop with a capacity, one speaker appearing twice, and a schedule that
  * satisfies its own validation rules.
  *
- * Times are written in the venue's local time with an explicit offset, rather
- * than pre-converted to UTC. `2026-09-24T10:45:00-03:00` can be checked
- * against the printed programme by reading it; `2026-09-24T13:45:00Z` cannot.
- * Sanity normalises both to the same instant.
+ * Times are **authored** in the venue's local time and **stored** as UTC.
+ * `at(DAY_ONE, "10:45")` can be checked against a printed programme by
+ * reading it, where the UTC equivalent cannot — and the helper converts, so
+ * that one representation reaches the dataset. Sanity does not normalise
+ * datetimes; see the note on `at` below, which is the whole reason it exists.
  *
  * Document ids are stable and derived from slugs, so seeding twice replaces
  * rather than duplicates.
