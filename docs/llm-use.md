@@ -76,6 +76,40 @@ Next.js module resolution or the `@/` path alias, and `src/lib/env.ts` throws at
 missing variable, which would break CLI commands that need none of them. The invariant in
 `AGENTS.md` was amended to state the exception rather than the code changed to hide it.
 
+## Milestone 3 — Fixture content
+
+### Where agent output was wrong
+
+Two errors, both silent, both caught only by checking the result rather than the report.
+
+- **Fixture documents were given ids like `session.keynote`.** The Content Lake treats any `_id`
+  containing a dot as private regardless of dataset visibility — the same mechanism that keeps
+  `drafts.*` unreadable. Seeding reported success, all 49 documents were written, and the Studio
+  displayed the full conference. The public API returned nothing. The public schedule would have
+  been empty while every authenticated view looked perfect.
+
+  The agent had documented this exact rule in `docs/runbook.md` one milestone earlier, as the
+  reason a public dataset does not leak drafts, and then wrote fixture ids that violated it.
+
+- **Session times were stored with a UTC offset rather than normalised.** Sanity persists a
+  datetime exactly as given, so `2026-09-24T08:30:00-03:00` was stored verbatim while the Studio's
+  own input writes `Z`-suffixed UTC. GROQ compares datetime strings lexicographically unless cast,
+  so a dataset holding both forms filters incorrectly. The instants were right; every range query
+  over them would have been wrong.
+
+Both are now enforced by tests over the fixture data, and both are recorded where they belong —
+the id rule in the runbook, the storage format in ADR-0002.
+
+### The pattern, restated
+
+Milestone 1's errors were confident claims about unverified things. Milestone 3's were different
+and worse: **operations that reported success while achieving nothing.** `pnpm seed` printed
+"Done" and wrote 49 documents that no reader could see.
+
+The generalisation is that a tool's own success message is not evidence. What settled both cases
+was querying the public API as an anonymous reader — checking the result the system is supposed to
+produce, from the position of the person it is produced for.
+
 ## What this means for reviewing the code
 
 Read the claims, not just the code. Anywhere this repository asserts that something was measured,

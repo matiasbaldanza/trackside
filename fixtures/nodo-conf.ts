@@ -24,8 +24,22 @@ export const VENUE_TIMEZONE = "America/Argentina/Buenos_Aires";
 const DAY_ONE = "2026-09-24";
 const DAY_TWO = "2026-09-25";
 
-/** Venue-local time as an unambiguous instant. Buenos Aires is UTC−3. */
-const at = (day: string, time: string) => `${day}T${time}:00-03:00`;
+/**
+ * Venue-local time, stored as normalised UTC.
+ *
+ * Written as `at(DAY_ONE, "10:45")` so the source can be checked against a
+ * printed programme by reading it, and converted here so that every stored
+ * value uses one representation.
+ *
+ * The conversion is not cosmetic. Sanity persists a datetime exactly as it is
+ * given: writing `2026-09-24T10:45:00-03:00` through the API stores that
+ * string, while the Studio's own date input writes `Z`-suffixed UTC. A
+ * dataset holding both forms compares them lexicographically in GROQ unless
+ * every comparison is explicitly cast, so `startsAt < "2026-09-25T00:00:00Z"`
+ * would quietly return the wrong sessions. One representation, chosen at the
+ * point of writing, removes the class of bug.
+ */
+const at = (day: string, time: string) => new Date(`${day}T${time}:00-03:00`).toISOString();
 
 interface Doc {
   _id: string;
@@ -59,7 +73,7 @@ const event: Doc = {
 
 const rooms: Doc[] = [
   {
-    _id: "track.auditorio",
+    _id: "track-auditorio",
     _type: "track",
     name: "Auditorio Principal",
     shortName: "AUD",
@@ -68,7 +82,7 @@ const rooms: Doc[] = [
     capacity: 600,
   },
   {
-    _id: "track.norte",
+    _id: "track-norte",
     _type: "track",
     name: "Sala Norte",
     shortName: "NOR",
@@ -77,7 +91,7 @@ const rooms: Doc[] = [
     capacity: 180,
   },
   {
-    _id: "track.sur",
+    _id: "track-sur",
     _type: "track",
     name: "Sala Sur",
     shortName: "SUR",
@@ -86,7 +100,7 @@ const rooms: Doc[] = [
     capacity: 180,
   },
   {
-    _id: "track.laboratorio",
+    _id: "track-laboratorio",
     _type: "track",
     name: "Laboratorio",
     shortName: "LAB",
@@ -246,7 +260,7 @@ const speakerSeeds: SpeakerSeed[] = [
 ];
 
 const speakers: Doc[] = speakerSeeds.map((s) => ({
-  _id: `speaker.${s.key}`,
+  _id: `speaker-${s.key}`,
   _type: "speaker",
   name: s.name,
   slug: { _type: "slug", current: s.key },
@@ -256,7 +270,7 @@ const speakers: Doc[] = speakerSeeds.map((s) => ({
 }));
 
 const speakerRef = (key: string, index: number) => ({
-  ...ref(`speaker.${key}`),
+  ...ref(`speaker-${key}`),
   _key: `spk-${key}-${index}`,
 });
 
@@ -646,12 +660,12 @@ const sessionSeeds: SessionSeed[] = [
 ];
 
 const sessions: Doc[] = sessionSeeds.map((s) => ({
-  _id: `session.${s.key}`,
+  _id: `session-${s.key}`,
   _type: "session",
   title: s.title,
   slug: { _type: "slug", current: s.key },
   type: s.type,
-  track: ref(`track.${s.room}`),
+  track: ref(`track-${s.room}`),
   startsAt: at(s.day, s.start),
   durationMinutes: s.minutes,
   ...(s.abstract ? { abstract: s.abstract } : {}),

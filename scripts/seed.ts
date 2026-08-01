@@ -14,12 +14,16 @@
  * document in an unpublished state, and the point of the fixture set is to
  * have a programme the public schedule can actually read.
  */
-import type { SanityClient } from "@sanity/client";
+import { getCliClient } from "sanity/cli";
 
 import { fixtureDocuments, fixtureSummary } from "../fixtures/nodo-conf";
 
-/** `sanity exec` injects this. */
-declare const client: SanityClient;
+/**
+ * The client is requested rather than assumed to be in scope. `sanity exec`
+ * does not inject a global; `getCliClient()` returns one configured from
+ * sanity.cli.ts and authenticated with the token `--with-user-token` supplies.
+ */
+const client = getCliClient();
 
 async function seed() {
   const dataset = client.config().dataset;

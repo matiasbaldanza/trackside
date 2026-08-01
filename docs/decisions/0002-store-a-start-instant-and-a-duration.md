@@ -68,6 +68,12 @@ decision has to be revisited rather than extended.
 
 ## Consequences
 
+- **Sanity stores a datetime exactly as written, and does not normalise it.** Writing
+  `2026-09-24T08:30:00-03:00` through the API stores that string; the Studio's date input writes
+  `Z`-suffixed UTC. GROQ compares datetime strings lexicographically unless explicitly cast, so a
+  dataset holding both forms filters incorrectly — silently, and only for some rows. Everything
+  that writes a session must therefore normalise to UTC at the point of writing. The fixtures do;
+  the Studio already does.
 - End times are computed in `sanity/lib/scheduling.ts` and nowhere else.
 - Overlap detection compares computed intervals, and is unit-testable without a Studio, because
   the functions are pure.

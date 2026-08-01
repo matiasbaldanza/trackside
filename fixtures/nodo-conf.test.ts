@@ -62,6 +62,21 @@ describe("fixture shape", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
+  /**
+   * The Content Lake treats any document whose `_id` contains a dot as
+   * private, regardless of dataset visibility — that is the mechanism keeping
+   * `drafts.*` unreadable on a public dataset.
+   *
+   * An earlier version of these fixtures used ids like `session.keynote`.
+   * Seeding reported success, every document was written, and every one of
+   * them was invisible to unauthenticated reads. Nothing failed; the content
+   * simply was not there. This test exists because that failure is silent.
+   */
+  it("uses no dots in document ids, which would make them private", () => {
+    const dotted = fixtureDocuments.map((d) => d._id).filter((id) => id.includes("."));
+    expect(dotted).toEqual([]);
+  });
+
   it("gives every session a unique slug", () => {
     const slugs = sessions.map((s) => s.slug.current);
     expect(new Set(slugs).size).toBe(slugs.length);
@@ -142,6 +157,27 @@ describe("the programme satisfies its own validation", () => {
     for (const s of sessions) {
       expect(s.durationMinutes, s.title).toBeGreaterThan(0);
     }
+  });
+
+  /**
+   * Sanity stores a datetime exactly as given. Writing an offset form through
+   * the API stores that string, while the Studio writes `Z`-suffixed UTC, and
+   * GROQ compares datetime strings lexicographically unless explicitly cast —
+   * so a dataset holding both forms filters incorrectly, silently.
+   *
+   * The first seeded programme had this: every session was stored as
+   * `…T08:30:00-03:00`. The instants were right and every range query over
+   * them would have been wrong.
+   */
+  it("normalises every start to UTC, so one representation is stored", () => {
+    const notUtc = sessions.filter((s) => !s.startsAt.endsWith("Z")).map((s) => s.startsAt);
+    expect(notUtc).toEqual([]);
+  });
+
+  it("still places sessions at the venue-local times the programme intends", () => {
+    const registration = sessions.find((s) => s.slug.current === "acreditacion-dia-1");
+    // 08:30 in Buenos Aires (UTC−3) is 11:30 UTC.
+    expect(registration?.startsAt).toBe("2026-09-24T11:30:00.000Z");
   });
 });
 

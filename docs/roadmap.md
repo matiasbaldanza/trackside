@@ -37,7 +37,7 @@ Sanity imports. The Studio needs an explicit client boundary. Recorded in `docs/
 
 ---
 
-## Milestone 2 — Content model ⬜
+## Milestone 2 — Content model ✅
 
 **Outcome:** The conference programme is modelled, with validation that prevents a schedule from
 becoming structurally impossible.
@@ -68,7 +68,7 @@ validation` · `test: cover scheduling logic`
 
 ---
 
-## Milestone 3 — Fixture content ⬜
+## Milestone 3 — Fixture content ✅
 
 **Outcome:** A complete, realistic programme for Nodo Conf that can be loaded into any dataset from
 empty.
@@ -86,7 +86,14 @@ empty.
 **Documentation:** `docs/local-development.md`; the seeding and backup sections of
 `docs/runbook.md`.
 
-**Exit criteria:** `pnpm seed` populates a fresh dataset with content that validates.
+**Exit criteria:** ✅ `pnpm seed` populates a dataset with content that validates — verified over
+the public API as an anonymous reader, not only in the authenticated Studio.
+
+**What was learned:** a document whose `_id` contains a dot is private regardless of dataset
+visibility, so the first seeded programme was invisible to everyone except authenticated users
+while reporting complete success. Sanity also stores datetimes exactly as written rather than
+normalising them, which would have made every range query unreliable. Both are now covered by
+tests over the fixture data.
 
 **Commit boundaries:** `feat: add nodo conf fixture content` · `chore: add seed and export scripts`
 

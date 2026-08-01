@@ -171,8 +171,7 @@ production — the public schedule itself is unaffected, because it is rendered 
 
 ## 4. Seeding content
 
-> **Unverified.** The script is written and type-checks; it has not yet been run against a
-> dataset, because doing so requires an interactive `sanity login`.
+> **Verified 2026-08-01.**
 
 ```bash
 pnpm exec sanity login   # once per machine
@@ -189,13 +188,54 @@ which dataset a command touches.
 transaction: a partially seeded conference is worse than an empty one, because references dangle
 and the schedule renders half an event.
 
-**Verify:** `/studio` lists 26 sessions across two days, and no session shows a validation error.
-Some speakers will show a warning for a missing portrait or biography — that is intended, and is
-what the warning severity exists to express.
+**Verify** — and check the public API, not only the Studio. The Studio is authenticated and will
+happily show documents that no unauthenticated reader can see:
+
+```bash
+curl -s --get "https://<projectId>.api.sanity.io/v2026-07-31/data/query/production" \
+  --data-urlencode 'query=count(*[_type=="session"])'
+```
+
+This must return 26. If it returns 0 while the Studio looks complete, the documents have ids
+containing a dot — see the note below.
+
+`/studio` should list 26 sessions across two days with no validation errors. Some speakers will
+show a warning for a missing portrait or biography; that is intended, and is what the warning
+severity exists to express.
+
+### Document ids must not contain a dot
+
+The Content Lake treats any document whose `_id` contains a dot as private, regardless of dataset
+visibility. That is the mechanism keeping `drafts.*` unreadable on a public dataset, and it applies
+to every id, not only drafts.
+
+The first seeded programme used ids like `session.keynote`. Seeding reported success, all 49
+documents were written, the Studio showed the full conference — and the public API returned
+nothing. The failure is completely silent from an authenticated seat. Fixture ids now use hyphens,
+and a test enforces it.
 
 ## 5. Backup and restore
 
-_Unverified — Milestone 3._ Exporting a dataset with its assets, and restoring one.
+> **Export verified 2026-08-01. Restore unverified** — the export has not yet been imported back.
+
+```bash
+pnpm content:export      # writes exports/production-<timestamp>.tar.gz
+```
+
+The `exports/` directory is ignored by git. A dataset export is a full copy of the content,
+including anything unpublished, so it belongs on disk rather than in the repository.
+
+Restoring:
+
+```bash
+pnpm exec sanity dataset import exports/<file>.tar.gz production --replace
+```
+
+**An export is required before any content migration that is not a dry run**, and before any bulk
+delete. Content migrations are not reliably invertible; restore is the rollback.
+
+This was used in earnest during Milestone 3: 48 documents with unusable ids had to be removed, and
+the export taken beforehand made the deletion reversible rather than final.
 
 **An export is required before any content migration that is not a dry run.** Content migrations
 are not reliably invertible; restore is the rollback.
