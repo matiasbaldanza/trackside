@@ -86,6 +86,14 @@ design is trying to avoid.
   the fix is a denormalised end time, not a weaker rule.
 - Error messages name the conflicting session rather than reporting that a conflict exists. An
   editor should not have to search for what they collided with.
+- **Every rule is attached to a field, not to the document.** This was not the first
+  implementation. Document-level rules read well in the schema — one place, all the rules — but in
+  the Studio they surface only in a validation panel the editor has to open, while the Publish
+  button says nothing more than *"There are validation errors that need to be fixed."* A message
+  naming the session you collided with is worth nothing if you have to go looking for it. The
+  scheduling rules therefore sit on `startsAt`, the workshop rules on `capacity` and `signupUrl`,
+  the speaker rules on `speakers`. Sanity revalidates the whole document, so they still re-run when
+  a neighbouring field changes.
 
 ## Revisiting
 

@@ -106,6 +106,35 @@ export const session = defineType({
       description:
         "In the order they should be credited. A panel lists its moderator first by convention.",
       hidden: ({ parent }) => isInterval(parent?.type),
+      validation: (rule) => [
+        // Error: a break with speakers describes something that is not a break.
+        rule.custom((value, context) => {
+          const doc = context.document as { type?: string } | undefined;
+          if (!isInterval(doc?.type)) return true;
+          return (value as unknown[] | undefined)?.length
+            ? "Breaks and registration have no speakers. Change the type, or remove them."
+            : true;
+        }),
+        // Warnings: the programme is unfinished, not broken. See ADR-0003.
+        rule
+          .custom(async (_value, context) => {
+            const doc = context.document as SessionDocument | undefined;
+            if (!doc) return true;
+
+            const clashes = await findSpeakerClashes(doc, context);
+            if (clashes.length > 0) {
+              const who = clashes[0]?.speakerName;
+              return `${who ? `${who} is` : "A speaker is"} also scheduled for ${listTitles(clashes)} at this time.`;
+            }
+
+            if (!isInterval(doc.type) && (doc.speakers?.length ?? 0) === 0) {
+              return "No speakers yet.";
+            }
+
+            return true;
+          })
+          .warning(),
+      ],
     }),
     defineField({
       name: "language",
@@ -155,7 +184,36 @@ export const session = defineType({
       group: "schedule",
       description:
         "Stored as an instant. The Studio shows it in your own timezone, which may not be the venue's -- check the day before saving.",
-      validation: (rule) => rule.required(),
+      /**
+       * The scheduling rules are attached here rather than to the document,
+       * so that they appear beneath the field an editor is looking at. A
+       * document-level rule shows only in the validation panel, and a message
+       * naming the session you collided with is worth nothing if you have to
+       * go and find it.
+       *
+       * They re-run when the room or duration changes too -- Sanity
+       * revalidates the whole document -- and the messages name the room and
+       * the conflicting session, so they read correctly whichever field
+       * caused the collision.
+       */
+      validation: (rule) => [
+        rule.required(),
+        rule.custom(async (_value, context) => {
+          const doc = context.document as SessionDocument | undefined;
+          if (!doc) return true;
+
+          const conflicts = await findConflictsInRoom(doc, context);
+          if (conflicts.length > 0) {
+            return `This room is already in use at that time by ${listTitles(conflicts)}. Two sessions cannot share a room.`;
+          }
+
+          if (!(await isInsideEvent(doc, context))) {
+            return "This session falls outside the conference dates. Check the event's dates, and remember the Studio shows times in your own timezone.";
+          }
+
+          return true;
+        }),
+      ],
     }),
     defineField({
       name: "durationMinutes",
@@ -173,6 +231,15 @@ export const session = defineType({
       group: "schedule",
       description: "How many people can attend. Workshops are capped; talks are not.",
       hidden: ({ parent }) => parent?.type !== "workshop",
+      validation: (rule) =>
+        rule.custom((value, context) => {
+          const doc = context.document as { type?: string } | undefined;
+          if (doc?.type !== "workshop") return true;
+          if (typeof value !== "number" || value <= 0) {
+            return "A workshop needs a number of places. Attendees cannot sign up for an unbounded room.";
+          }
+          return true;
+        }),
     }),
     defineField({
       name: "signupUrl",
@@ -181,6 +248,12 @@ export const session = defineType({
       group: "schedule",
       description: "Where attendees reserve a place.",
       hidden: ({ parent }) => parent?.type !== "workshop",
+      validation: (rule) =>
+        rule.custom((value, context) => {
+          const doc = context.document as { type?: string } | undefined;
+          if (doc?.type !== "workshop") return true;
+          return value ? true : "A workshop needs a sign-up URL, or attendees have no way to reserve a place.";
+        }),
     }),
     defineField({
       name: "recorded",
@@ -206,62 +279,6 @@ export const session = defineType({
       group: "live",
     }),
   ],
-  /**
-   * Document-level rules, split by severity. See ADR-0003.
-   *
-   * Errors block publishing and describe a programme that cannot exist: a
-   * room hosting two sessions at once, a session outside the conference, a
-   * workshop nobody can sign up for. Warnings describe a programme that is
-   * merely unfinished. The distinction is not about importance — it is about
-   * whether an operator changing a room at 09:40 on the day should be stopped
-   * by it.
-   */
-  validation: (rule) => [
-    // --- Errors: the programme would be impossible ---
-    rule.custom(async (doc: SessionDocument | undefined, context) => {
-      if (!doc) return true;
-
-      const conflicts = await findConflictsInRoom(doc, context);
-      if (conflicts.length > 0) {
-        return `This room is already in use at that time by ${listTitles(conflicts)}. Two sessions cannot share a room.`;
-      }
-
-      if (!(await isInsideEvent(doc, context))) {
-        return "This session falls outside the conference dates. Check the event's dates, and remember the Studio shows times in your own timezone.";
-      }
-
-      if (doc.type === "workshop") {
-        if (!doc.capacity) return "A workshop needs a number of places. Attendees cannot sign up for an unbounded room.";
-        if (!doc.signupUrl) return "A workshop needs a sign-up URL, or attendees have no way to reserve a place.";
-      }
-
-      if (isInterval(doc.type) && (doc.speakers?.length ?? 0) > 0) {
-        return "Breaks and registration have no speakers. Change the type, or remove them.";
-      }
-
-      return true;
-    }),
-
-    // --- Warnings: the programme is unfinished, not broken ---
-    rule
-      .custom(async (doc: SessionDocument | undefined, context) => {
-        if (!doc) return true;
-
-        const clashes = await findSpeakerClashes(doc, context);
-        if (clashes.length > 0) {
-          const who = clashes[0]?.speakerName;
-          return `${who ? `${who} is` : "A speaker is"} also scheduled for ${listTitles(clashes)} at this time.`;
-        }
-
-        if (!isInterval(doc.type) && (doc.speakers?.length ?? 0) === 0) {
-          return "No speakers yet.";
-        }
-
-        return true;
-      })
-      .warning(),
-  ],
-
   orderings: [
     {
       name: "startsAtAsc",
@@ -276,6 +293,7 @@ export const session = defineType({
       startsAt: "startsAt",
       durationMinutes: "durationMinutes",
       trackName: "track.name",
+      trackShortName: "track.shortName",
       state: "liveStatus.state",
       delayMinutes: "liveStatus.delayMinutes",
     },

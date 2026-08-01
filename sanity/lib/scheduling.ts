@@ -173,6 +173,7 @@ export interface SessionPreviewInput {
   startsAt?: string;
   durationMinutes?: number;
   trackName?: string;
+  trackShortName?: string;
   state?: string;
   delayMinutes?: number;
 }
@@ -180,10 +181,15 @@ export interface SessionPreviewInput {
 /**
  * The subtitle shown against a session in the Studio's document lists.
  *
- * Reads as `Sat 10:30 · Main Hall · 40 min · Delayed +15m`, so that a list of
- * thirty sessions can be scanned as a schedule rather than as a list of
- * titles. During an event this list is the thing an operator is looking at,
- * and a column of identical-looking rows is useless to them.
+ * Reads as `Sat 10:30 · AUD · 40 min · Delayed +15m`, so that a list of thirty
+ * sessions can be scanned as a schedule rather than as a list of titles.
+ * During an event this list is the thing an operator is looking at, and a
+ * column of identical-looking rows is useless to them.
+ *
+ * The room's short name is preferred over its full one. Full names such as
+ * "Auditorio Principal" pushed the subtitle past the width of the Studio's
+ * list pane, and what truncated away was the duration -- the part an operator
+ * most needs. This was only visible once real content was in the list.
  *
  * Times render in the viewer's own timezone, not the venue's: the Studio has
  * no access to the event document from a preview, and inventing a second
@@ -194,7 +200,8 @@ export function formatSessionPreview(input: SessionPreviewInput): {
   title: string;
   subtitle?: string;
 } {
-  const { title, type, startsAt, durationMinutes, trackName, state, delayMinutes } = input;
+  const { title, type, startsAt, durationMinutes, trackName, trackShortName, state, delayMinutes } =
+    input;
 
   const when = startsAt
     ? new Intl.DateTimeFormat(undefined, {
@@ -207,7 +214,7 @@ export function formatSessionPreview(input: SessionPreviewInput): {
 
   const parts = [
     when,
-    trackName,
+    trackShortName || trackName,
     durationMinutes ? formatDuration(durationMinutes) : undefined,
     formatStatusBadge(state, delayMinutes) || undefined,
   ].filter(Boolean);

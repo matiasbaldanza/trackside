@@ -5,6 +5,7 @@ import {
   endsAt,
   findTrackConflicts,
   formatDuration,
+  formatSessionPreview,
   formatStatusBadge,
   isSchedulable,
   isWithinEvent,
@@ -198,5 +199,37 @@ describe("formatStatusBadge", () => {
     ["cancelled", undefined, "Cancelled"],
   ])("%s/%s → %s", (state, delay, expected) => {
     expect(formatStatusBadge(state, delay)).toBe(expected);
+  });
+});
+
+describe("formatSessionPreview room naming", () => {
+  const base = { title: "Keynote", startsAt: "2026-09-24T12:30:00Z", durationMinutes: 45 };
+
+  // Full room names truncated the subtitle in the Studio's list pane, and the
+  // duration was what disappeared -- the part an operator most needs.
+  it("prefers the room's short name", () => {
+    const { subtitle } = formatSessionPreview({
+      ...base,
+      trackName: "Auditorio Principal",
+      trackShortName: "AUD",
+    });
+    expect(subtitle).toContain("AUD");
+    expect(subtitle).not.toContain("Auditorio Principal");
+    expect(subtitle).toContain("45 min");
+  });
+
+  it("falls back to the full name when there is no short one", () => {
+    const { subtitle } = formatSessionPreview({ ...base, trackName: "Auditorio Principal" });
+    expect(subtitle).toContain("Auditorio Principal");
+  });
+
+  it("keeps a status badge last, where it reads as an exception", () => {
+    const { subtitle } = formatSessionPreview({
+      ...base,
+      trackShortName: "AUD",
+      state: "delayed",
+      delayMinutes: 15,
+    });
+    expect(subtitle?.endsWith("Delayed +15m")).toBe(true);
   });
 });

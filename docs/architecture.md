@@ -195,6 +195,10 @@ than stored ([ADR-0002](./decisions/0002-store-a-start-instant-and-a-duration.md
 narrowed by room in the query and compared in memory. For tens of sessions per room that is the
 right trade; at thousands the fix would be a denormalised end time, not a weaker rule.
 
+**Rules are attached to fields, never to the document.** A document-level rule appears only in the
+validation panel, and the Publish button reduces it to a generic sentence. Attaching each rule to
+the field it concerns puts the message where the editor is already looking.
+
 Two further details that are easy to get wrong:
 
 - **Back-to-back sessions are not conflicts.** Intervals are half-open, so a talk ending at 10:30

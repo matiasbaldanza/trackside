@@ -100,6 +100,22 @@ Two errors, both silent, both caught only by checking the result rather than the
 Both are now enforced by tests over the fixture data, and both are recorded where they belong —
 the id rule in the runbook, the storage format in ADR-0002.
 
+### Found by looking at the Studio, not the code
+
+Two things no test would have caught, both surfaced by the repository owner opening the Studio:
+
+- **Validation errors were attached to the document rather than to fields.** The rules worked and
+  the messages were specific, but the editor saw only *"There are validation errors that need to be
+  fixed before this document can be published"* unless they opened a panel. The care taken over the
+  message wording was invisible in the place it mattered.
+- **Session previews truncated.** Full room names pushed the subtitle past the width of the list
+  pane, and what disappeared was the duration — the part an operator most needs. Fixed by preferring
+  the room's short name, which is what that field was for.
+
+Neither is a correctness bug, and neither would have failed a test. They are the difference between
+validation that technically works and validation an editor can use, which is the whole argument
+this project is making.
+
 ### The pattern, restated
 
 Milestone 1's errors were confident claims about unverified things. Milestone 3's were different
