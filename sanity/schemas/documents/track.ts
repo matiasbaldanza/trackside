@@ -25,6 +25,7 @@ export const track = defineType({
       title: "Name",
       type: "string",
       description: "As shown in the schedule, for example “Main Hall”.",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "slug",
@@ -33,6 +34,7 @@ export const track = defineType({
       options: { source: "name", maxLength: 40 },
       description:
         "Used in the schedule URL, so /?track=main-hall is shareable. Changing it breaks links that have already been shared.",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "shortName",
@@ -47,6 +49,7 @@ export const track = defineType({
       type: "number",
       description:
         "Left-to-right position in the timetable. Rooms have a physical arrangement and a hierarchy; alphabetical order respects neither.",
+      validation: (rule) => rule.required().integer(),
     }),
     defineField({
       name: "capacity",

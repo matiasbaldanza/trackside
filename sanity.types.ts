@@ -24,7 +24,7 @@ export type TrackReference = {
 
 export type LiveStatus = {
   _type: "liveStatus";
-  state?: "onTime" | "delayed" | "moved" | "cancelled";
+  state: "onTime" | "delayed" | "moved" | "cancelled";
   delayMinutes?: number;
   movedToTrack?: TrackReference;
   note?: string;
@@ -50,9 +50,9 @@ export type Session = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  title?: string;
-  slug?: Slug;
-  type?: "talk" | "keynote" | "workshop" | "panel" | "break" | "registration";
+  title: string;
+  slug: Slug;
+  type: "talk" | "keynote" | "workshop" | "panel" | "break" | "registration";
   abstract?: string;
   speakers?: Array<
     {
@@ -61,9 +61,9 @@ export type Session = {
   >;
   language?: "es" | "en";
   level?: "intro" | "intermediate" | "advanced";
-  track?: TrackReference;
-  startsAt?: string;
-  durationMinutes?: number;
+  track: TrackReference;
+  startsAt: string;
+  durationMinutes: number;
   capacity?: number;
   signupUrl?: string;
   recorded?: boolean;
@@ -90,8 +90,8 @@ export type Speaker = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  name?: string;
-  slug?: Slug;
+  name: string;
+  slug: Slug;
   jobTitle?: string;
   organisation?: string;
   photo?: {
@@ -149,10 +149,10 @@ export type Track = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  name?: string;
-  slug?: Slug;
+  name: string;
+  slug: Slug;
   shortName?: string;
-  order?: number;
+  order: number;
   capacity?: number;
 };
 
@@ -162,9 +162,9 @@ export type Event = {
   _createdAt: string;
   _updatedAt: string;
   _rev: string;
-  name?: string;
+  name: string;
   tagline?: string;
-  startDate?: string;
+  startDate: string;
   endDate?: string;
   timezone?: string;
   venueName?: string;

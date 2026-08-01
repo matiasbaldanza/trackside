@@ -17,7 +17,9 @@
     "types:generate": "sanity typegen generate",
     "schema:check": "pnpm schema:extract && pnpm types:generate && git add -N schema.json sanity.types.ts && git diff --exit-code -- schema.json sanity.types.ts",
     "migration:create": "sanity migration create",
-    "migration:run": "sanity migration run"
+    "migration:run": "sanity migration run",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@sanity/client": "^7.26.0",
@@ -39,6 +41,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

@@ -20,12 +20,14 @@ export const speaker = defineType({
       title: "Name",
       type: "string",
       description: "As the speaker wishes to be credited.",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "slug",
       title: "Slug",
       type: "slug",
       options: { source: "name", maxLength: 60 },
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "jobTitle",
@@ -45,6 +47,10 @@ export const speaker = defineType({
       options: { hotspot: true },
       description:
         "Cropped to a square in the interface. Set the hotspot so the crop keeps the face centred.",
+      // A warning, never an error: a speaker is often confirmed weeks before
+      // they send a photograph, and the programme has to be publishable in
+      // the meantime. See ADR-0003.
+      validation: (rule) => rule.warning("No portrait yet."),
       fields: [
         defineField({
           name: "alt",
@@ -61,6 +67,7 @@ export const speaker = defineType({
       type: "array",
       description:
         "A short paragraph or two. Deliberately limited: no headings, no images, no embedded media. A biography is prose, and richer formatting here would make the speaker list inconsistent.",
+      validation: (rule) => rule.warning("No biography yet."),
       of: [
         defineArrayMember({
           type: "block",

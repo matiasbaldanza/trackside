@@ -65,7 +65,7 @@
               }
             ]
           },
-          "optional": true
+          "optional": false
         },
         "delayMinutes": {
           "type": "objectAttribute",
@@ -199,7 +199,7 @@
         "value": {
           "type": "string"
         },
-        "optional": true
+        "optional": false
       },
       "slug": {
         "type": "objectAttribute",
@@ -207,7 +207,7 @@
           "type": "inline",
           "name": "slug"
         },
-        "optional": true
+        "optional": false
       },
       "type": {
         "type": "objectAttribute",
@@ -240,7 +240,7 @@
             }
           ]
         },
-        "optional": true
+        "optional": false
       },
       "abstract": {
         "type": "objectAttribute",
@@ -315,21 +315,21 @@
           "type": "inline",
           "name": "track.reference"
         },
-        "optional": true
+        "optional": false
       },
       "startsAt": {
         "type": "objectAttribute",
         "value": {
           "type": "string"
         },
-        "optional": true
+        "optional": false
       },
       "durationMinutes": {
         "type": "objectAttribute",
         "value": {
           "type": "number"
         },
-        "optional": true
+        "optional": false
       },
       "capacity": {
         "type": "objectAttribute",
@@ -469,7 +469,7 @@
         "value": {
           "type": "string"
         },
-        "optional": true
+        "optional": false
       },
       "slug": {
         "type": "objectAttribute",
@@ -477,7 +477,7 @@
           "type": "inline",
           "name": "slug"
         },
-        "optional": true
+        "optional": false
       },
       "jobTitle": {
         "type": "objectAttribute",
@@ -841,7 +841,7 @@
         "value": {
           "type": "string"
         },
-        "optional": true
+        "optional": false
       },
       "slug": {
         "type": "objectAttribute",
@@ -849,7 +849,7 @@
           "type": "inline",
           "name": "slug"
         },
-        "optional": true
+        "optional": false
       },
       "shortName": {
         "type": "objectAttribute",
@@ -863,7 +863,7 @@
         "value": {
           "type": "number"
         },
-        "optional": true
+        "optional": false
       },
       "capacity": {
         "type": "objectAttribute",
@@ -914,7 +914,7 @@
         "value": {
           "type": "string"
         },
-        "optional": true
+        "optional": false
       },
       "tagline": {
         "type": "objectAttribute",
@@ -928,7 +928,7 @@
         "value": {
           "type": "string"
         },
-        "optional": true
+        "optional": false
       },
       "endDate": {
         "type": "objectAttribute",

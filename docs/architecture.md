@@ -165,9 +165,44 @@ late sessions — quietly, and only sometimes.
 
 ## Validation
 
-_To be written in Milestone 2._ Which rules block publishing and which only advise, and the
-reasoning behind that split. Where scheduling logic lives, and why it is expressed as pure
-functions rather than inside the schema.
+Rules are split by **whether the described programme could exist**, not by how much the problem
+matters. Errors block publishing; warnings never do. The reasoning, and the three alternatives
+rejected, are in [ADR-0003](./decisions/0003-split-validation-by-severity.md).
+
+| | Blocks publishing | Examples |
+| --- | --- | --- |
+| **Error** | Yes | Two sessions in one room at once · session outside the conference dates · workshop with no capacity or sign-up URL · a delay with no minutes · missing room, start or duration |
+| **Warning** | No | A speaker double-booked · no speakers yet · missing portrait, biography or abstract |
+
+The test for a new rule is one question: if this were published as it stands, would the schedule be
+**wrong**, or merely **incomplete**?
+
+### Where the logic lives
+
+```
+sanity/lib/scheduling.ts   pure functions -- no Sanity, no network, no clock
+sanity/lib/validation.ts   fetches candidates, turns answers into messages
+sanity/schemas/…           declares which rule is an error and which a warning
+```
+
+The separation exists so that the rules can be tested. `scheduling.ts` imports nothing and has 42
+unit tests; `validation.ts` is a thin layer that is exercised by using the Studio. Overlap
+detection, day derivation and the event-bounds check are all decided in the pure layer — the
+schema only decides severity.
+
+**Overlap cannot be expressed as a GROQ filter**, because the end of a session is derived rather
+than stored ([ADR-0002](./decisions/0002-store-a-start-instant-and-a-duration.md)). Candidates are
+narrowed by room in the query and compared in memory. For tens of sessions per room that is the
+right trade; at thousands the fix would be a denormalised end time, not a weaker rule.
+
+Two further details that are easy to get wrong:
+
+- **Back-to-back sessions are not conflicts.** Intervals are half-open, so a talk ending at 10:30
+  and one starting at 10:30 coexist. Flagging the ordinary case would teach editors to ignore the
+  rule.
+- **A document and its own draft are the same session.** Both ids are excluded from the conflict
+  query, and remaining candidates are deduplicated by published id — otherwise every session with
+  an unpublished edit in flight would appear to collide with itself.
 
 ## Data access
 

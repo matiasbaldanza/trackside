@@ -40,6 +40,7 @@ export const liveStatus = defineType({
         layout: "radio",
       },
       description: "Leave as “On time” unless something has actually changed.",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "delayMinutes",
@@ -47,6 +48,15 @@ export const liveStatus = defineType({
       type: "number",
       description: "How much later than scheduled the session will start.",
       hidden: ({ parent }) => parent?.state !== "delayed",
+      // "Delayed" without a number tells an attendee nothing they did not
+      // already suspect from standing outside a closed door.
+      validation: (rule) =>
+        rule.custom((value, context) => {
+          const state = (context.parent as { state?: string } | undefined)?.state;
+          if (state !== "delayed") return true;
+          if (typeof value !== "number" || value <= 0) return "How many minutes late?";
+          return true;
+        }),
     }),
     defineField({
       name: "movedToTrack",
@@ -55,6 +65,12 @@ export const liveStatus = defineType({
       to: [{ type: "track" }],
       description: "The room the session has moved to.",
       hidden: ({ parent }) => parent?.state !== "moved",
+      validation: (rule) =>
+        rule.custom((value, context) => {
+          const state = (context.parent as { state?: string } | undefined)?.state;
+          if (state !== "moved") return true;
+          return value ? true : "Moved where? Attendees need the new room.";
+        }),
     }),
     defineField({
       name: "note",

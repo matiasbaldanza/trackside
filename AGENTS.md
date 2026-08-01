@@ -161,9 +161,15 @@ saying what it is, which is usually the part the reader needed.
 
 These are invariants. Breaking one requires an ADR that supersedes it.
 
-1. **All Sanity access is confined to `src/lib/sanity/`.** Nothing elsewhere imports the Sanity
-   client. Routes and components consume typed view models, never raw Sanity documents. This keeps
-   the content source replaceable and the application auditable.
+1. **All Sanity access in the application is confined to `src/lib/sanity/`.** No route, component
+   or utility elsewhere imports the Sanity client; they consume typed view models, never raw
+   Sanity documents. This keeps the content source replaceable and the application auditable.
+
+   The Studio is not bound by this and cannot be. Schema validation in `sanity/lib/validation.ts`
+   queries sibling documents through the client Sanity hands it, because a rule like "this room is
+   already booked" is a question about the dataset. That code ships to the Studio, never to the
+   public application, and would be the first thing discarded if the content source were replaced
+   — along with the schema it validates.
 2. **One data-access wrapper expresses caching policy.** Cache tags and revalidation live in a
    single fetch helper — not scattered across call sites.
 3. **Server Components by default.** A Client Component requires a reason that could not be met on
@@ -209,12 +215,12 @@ pnpm types:generate   # sanity.types.ts  (commit the result)
 pnpm schema:check     # regenerate both and fail on a diff
 pnpm migration:create # scaffold a content migration
 pnpm migration:run    # dry run by default; --no-dry-run to apply
+pnpm test             # unit tests
 ```
 
 Not implemented yet — do not reference these as if they work:
 
 ```bash
-pnpm test             # unit tests            (Milestone 2)
 pnpm seed             # load fixture content  (Milestone 3)
 ```
 

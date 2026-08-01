@@ -2,6 +2,17 @@ import { ClockIcon } from "@sanity/icons/Clock";
 import { defineArrayMember, defineField, defineType } from "sanity";
 
 import { formatSessionPreview } from "../../lib/scheduling";
+import {
+  findConflictsInRoom,
+  findSpeakerClashes,
+  isInsideEvent,
+  listTitles,
+  type SessionDocument,
+} from "../../lib/validation";
+
+/** Types that are intervals rather than programme content. */
+const INTERVAL_TYPES = ["break", "registration"];
+const isInterval = (type?: string) => INTERVAL_TYPES.includes(type ?? "");
 
 /**
  * A slot in the programme: a talk, a workshop, a panel, or a break.
@@ -37,6 +48,7 @@ export const session = defineType({
       title: "Title",
       type: "string",
       group: "content",
+      validation: (rule) => rule.required().max(120),
     }),
     defineField({
       name: "slug",
@@ -46,6 +58,7 @@ export const session = defineType({
       options: { source: "title", maxLength: 80 },
       description:
         "Used in the session URL. Avoid changing it once the programme is public; shared links do not update.",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "type",
@@ -65,6 +78,7 @@ export const session = defineType({
       },
       description:
         "Determines which fields apply. Breaks and registration have no speakers and need no abstract.",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "abstract",
@@ -73,7 +87,15 @@ export const session = defineType({
       rows: 5,
       group: "content",
       description: "What the session covers, in the speaker's own framing.",
-      hidden: ({ parent }) => parent?.type === "break" || parent?.type === "registration",
+      hidden: ({ parent }) => isInterval(parent?.type),
+      validation: (rule) => [
+        rule.max(1500).error("Too long for a schedule listing. Trim it to the essentials."),
+        rule.custom((value, context) => {
+          const doc = context.document as { type?: string } | undefined;
+          if (isInterval(doc?.type)) return true;
+          return value ? true : "No abstract yet.";
+        }).warning(),
+      ],
     }),
     defineField({
       name: "speakers",
@@ -83,7 +105,7 @@ export const session = defineType({
       of: [defineArrayMember({ type: "reference", to: [{ type: "speaker" }] })],
       description:
         "In the order they should be credited. A panel lists its moderator first by convention.",
-      hidden: ({ parent }) => parent?.type === "break" || parent?.type === "registration",
+      hidden: ({ parent }) => isInterval(parent?.type),
     }),
     defineField({
       name: "language",
@@ -100,7 +122,7 @@ export const session = defineType({
       },
       description:
         "The language the session is delivered in. Attendees filter on this, so it is content rather than an interface setting.",
-      hidden: ({ parent }) => parent?.type === "break" || parent?.type === "registration",
+      hidden: ({ parent }) => isInterval(parent?.type),
     }),
     defineField({
       name: "level",
@@ -114,7 +136,7 @@ export const session = defineType({
           { title: "Advanced", value: "advanced" },
         ],
       },
-      hidden: ({ parent }) => parent?.type === "break" || parent?.type === "registration",
+      hidden: ({ parent }) => isInterval(parent?.type),
     }),
 
     defineField({
@@ -124,6 +146,7 @@ export const session = defineType({
       group: "schedule",
       to: [{ type: "track" }],
       description: "Where the session takes place.",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "startsAt",
@@ -132,6 +155,7 @@ export const session = defineType({
       group: "schedule",
       description:
         "Stored as an instant. The Studio shows it in your own timezone, which may not be the venue's -- check the day before saving.",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "durationMinutes",
@@ -140,6 +164,7 @@ export const session = defineType({
       group: "schedule",
       initialValue: 40,
       description: "The end time is derived from this, and is never stored.",
+      validation: (rule) => rule.required().integer().min(5).max(600),
     }),
     defineField({
       name: "capacity",
@@ -181,6 +206,62 @@ export const session = defineType({
       group: "live",
     }),
   ],
+  /**
+   * Document-level rules, split by severity. See ADR-0003.
+   *
+   * Errors block publishing and describe a programme that cannot exist: a
+   * room hosting two sessions at once, a session outside the conference, a
+   * workshop nobody can sign up for. Warnings describe a programme that is
+   * merely unfinished. The distinction is not about importance — it is about
+   * whether an operator changing a room at 09:40 on the day should be stopped
+   * by it.
+   */
+  validation: (rule) => [
+    // --- Errors: the programme would be impossible ---
+    rule.custom(async (doc: SessionDocument | undefined, context) => {
+      if (!doc) return true;
+
+      const conflicts = await findConflictsInRoom(doc, context);
+      if (conflicts.length > 0) {
+        return `This room is already in use at that time by ${listTitles(conflicts)}. Two sessions cannot share a room.`;
+      }
+
+      if (!(await isInsideEvent(doc, context))) {
+        return "This session falls outside the conference dates. Check the event's dates, and remember the Studio shows times in your own timezone.";
+      }
+
+      if (doc.type === "workshop") {
+        if (!doc.capacity) return "A workshop needs a number of places. Attendees cannot sign up for an unbounded room.";
+        if (!doc.signupUrl) return "A workshop needs a sign-up URL, or attendees have no way to reserve a place.";
+      }
+
+      if (isInterval(doc.type) && (doc.speakers?.length ?? 0) > 0) {
+        return "Breaks and registration have no speakers. Change the type, or remove them.";
+      }
+
+      return true;
+    }),
+
+    // --- Warnings: the programme is unfinished, not broken ---
+    rule
+      .custom(async (doc: SessionDocument | undefined, context) => {
+        if (!doc) return true;
+
+        const clashes = await findSpeakerClashes(doc, context);
+        if (clashes.length > 0) {
+          const who = clashes[0]?.speakerName;
+          return `${who ? `${who} is` : "A speaker is"} also scheduled for ${listTitles(clashes)} at this time.`;
+        }
+
+        if (!isInterval(doc.type) && (doc.speakers?.length ?? 0) === 0) {
+          return "No speakers yet.";
+        }
+
+        return true;
+      })
+      .warning(),
+  ],
+
   orderings: [
     {
       name: "startsAtAsc",

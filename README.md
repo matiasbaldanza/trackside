@@ -12,16 +12,20 @@ Seeded content describes **Nodo Conf**, a fictional two-day conference in Buenos
 
 ## Current state
 
-**Milestone 1 — Foundation, in progress.**
+**Milestone 2 — Content model, in progress.**
 
 What works today:
 
 - A Next.js 16 application (App Router, React 19, TypeScript, Tailwind 4) serving an empty page.
-- Sanity Studio, running at `/studio`, connected to a Sanity project.
-- Project instructions, roadmap, and decision records.
+- Sanity Studio at `/studio`, with the full conference content model: events, rooms, speakers and
+  sessions.
+- Validation that refuses an impossible programme — two sessions cannot share a room at the same
+  time, and a session cannot fall outside the conference — while letting an unfinished one be
+  saved and published.
+- 42 unit tests over the scheduling logic.
 
-The Studio has no schema yet, so there is nothing to edit and nothing to display. The content
-model, the schedule, and everything else are in [`docs/roadmap.md`](./docs/roadmap.md).
+There is no public schedule yet, and no content to put in one. Both are in
+[`docs/roadmap.md`](./docs/roadmap.md).
 
 This section is updated at every milestone and at any commit that changes what the project can do.
 

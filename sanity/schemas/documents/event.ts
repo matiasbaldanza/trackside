@@ -25,6 +25,7 @@ export const event = defineType({
       title: "Name",
       type: "string",
       description: "The conference name, as it appears in the page title.",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "tagline",
@@ -37,6 +38,7 @@ export const event = defineType({
       title: "First day",
       type: "date",
       options: { dateFormat: "YYYY-MM-DD" },
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "endDate",
