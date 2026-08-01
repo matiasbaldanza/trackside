@@ -70,8 +70,11 @@ cp .env.example .env.local
 
 Set `NEXT_PUBLIC_SANITY_PROJECT_ID` in `.env.local` to that value.
 
-The project ID is not a secret. It is exposed to the browser by design, and reaching content with
-it is bounded by dataset visibility and CORS — see step 3.
+The project ID is not a secret and is exposed to the browser by design. **Read access is bounded by
+dataset visibility alone.** Because this dataset is public, anyone with the project ID can query it
+directly over HTTP — step 1.5 does exactly that. CORS, configured in step 3, restricts which
+browser origins may make requests from a page; it does not restrict the API and is not a
+data-access control.
 
 ### 1.5 Confirm the dataset is readable without credentials
 

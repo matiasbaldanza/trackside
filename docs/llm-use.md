@@ -50,10 +50,23 @@ This section exists because it is the useful one.
   the assertion — but it was an assertion when it was written.
 - **`AGENTS.md` listed `pnpm seed` among runnable commands** before the script existed, and stated
   an environment-variable invariant that its own `sanity.cli.ts` exception contradicted.
+- **Three files described read access as "bounded by dataset visibility and CORS".** CORS
+  restricts browser origins; it is not a data-access control, and a public dataset is readable by
+  anyone holding the project ID over plain HTTP. The agent had *itself* demonstrated this with a
+  `curl` request while verifying the dataset was public, and then wrote the opposite in prose.
+  Caught by CodeRabbit on the second review round.
+- **`docs/untracked/README.md` named `.env.local` as the single place secrets live.** True only
+  for local development; continuous integration and deployed environments have their own stores,
+  and a rotation must reach all of them.
 
 The pattern is consistent and worth naming: the agent's errors were **confident statements about
 things it had not verified**, not mistakes in code. The code compiled and the prose was plausible.
 That is the failure mode to review for.
+
+The CORS case sharpens it further. The agent did not lack the evidence — it had produced the
+evidence itself, minutes earlier, and still wrote a claim the evidence contradicted. Verifying
+something and then describing it are separate acts, and the second does not inherit the rigour of
+the first.
 
 ### One review comment was rejected
 

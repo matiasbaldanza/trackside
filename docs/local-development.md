@@ -64,8 +64,20 @@ mechanism, not a naming convention, which is why no token carries it. The two to
 through functions rather than at module scope, so importing this module from client code cannot
 pull a secret into the bundle.
 
-The project ID is not a secret. It is public by design, and access is bounded by dataset
-visibility and CORS.
+The project ID is not a secret. It is public by design, and treating it as one would be a false
+comfort — anyone holding it can read a public dataset directly over HTTP, from anywhere, with no
+browser involved:
+
+```bash
+curl "https://<projectId>.api.sanity.io/v2026-07-31/data/query/production?query=*%5B0%5D"
+```
+
+**Dataset visibility is what controls read access.** A public dataset is readable by anyone; a
+private one requires a token. **CORS controls something different** — which browser origins may
+make requests from a page — and it constrains the Studio, not the API. It is not a data-access
+boundary and must not be relied on as one.
+
+Nothing published to this dataset should be anything that cannot be public, because it is.
 
 ## Seeding content
 
