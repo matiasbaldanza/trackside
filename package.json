@@ -13,16 +13,16 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "schema:extract": "sanity schema extract --enforce-required-fields --force",
-    "types:generate": "sanity typegen generate",
-    "schema:check": "pnpm schema:extract && pnpm types:generate && git add -N schema.json sanity.types.ts && git diff --exit-code -- schema.json sanity.types.ts",
-    "migration:create": "sanity migration create",
-    "migration:run": "sanity migration run",
+    "schema:extract": "./node_modules/.bin/sanity schema extract --enforce-required-fields --force",
+    "types:generate": "./node_modules/.bin/sanity typegen generate",
+    "schema:check": "./node_modules/.bin/sanity schema extract --enforce-required-fields --force && ./node_modules/.bin/sanity typegen generate && git add -N schema.json sanity.types.ts && git diff --exit-code -- schema.json sanity.types.ts",
+    "migration:create": "./node_modules/.bin/sanity migration create",
+    "migration:run": "./node_modules/.bin/sanity migration run",
     "test": "vitest run",
     "test:watch": "vitest",
-    "seed": "sanity exec scripts/seed.ts --with-user-token",
+    "seed": "./node_modules/.bin/sanity exec scripts/seed.ts --with-user-token",
     "content:export": "sh scripts/export.sh",
-    "content:reset": "sanity exec scripts/reset.ts --with-user-token"
+    "content:reset": "./node_modules/.bin/sanity exec scripts/reset.ts --with-user-token"
   },
   "dependencies": {
     "@sanity/client": "^7.26.0",

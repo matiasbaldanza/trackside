@@ -192,10 +192,16 @@ and the schedule renders half an event.
 happily show documents that no unauthenticated reader can see:
 
 ```bash
-source .env.local
-curl -s --get "https://$NEXT_PUBLIC_SANITY_PROJECT_ID.api.sanity.io/v2026-07-31/data/query/$NEXT_PUBLIC_SANITY_DATASET" \
+set -eu
+. ./.env.local
+curl -sS --fail-with-body --get \
+  "https://$NEXT_PUBLIC_SANITY_PROJECT_ID.api.sanity.io/v2026-07-31/data/query/$NEXT_PUBLIC_SANITY_DATASET" \
   --data-urlencode 'query=count(*[_type=="session"])'
 ```
+
+`--fail-with-body` matters: plain `curl -s` exits successfully on a 401 or a 404, so a check
+without it reports nothing wrong when public reads are broken — which is the one thing it exists
+to detect. `set -eu` covers the other half, a missing `.env.local` or an unset variable.
 
 This must return 26. If it returns 0 while the Studio looks complete, the documents have ids
 containing a dot — see the note below.
@@ -252,10 +258,16 @@ affected, which is why this is preferable to deleting and recreating the dataset
 this class of failure:
 
 ```bash
-source .env.local
-curl -s --get "https://$NEXT_PUBLIC_SANITY_PROJECT_ID.api.sanity.io/v2026-07-31/data/query/$NEXT_PUBLIC_SANITY_DATASET" \
+set -eu
+. ./.env.local
+curl -sS --fail-with-body --get \
+  "https://$NEXT_PUBLIC_SANITY_PROJECT_ID.api.sanity.io/v2026-07-31/data/query/$NEXT_PUBLIC_SANITY_DATASET" \
   --data-urlencode 'query=count(*[_type=="session"])'
 ```
+
+`--fail-with-body` matters: plain `curl -s` exits successfully on a 401 or a 404, so a check
+without it reports nothing wrong when public reads are broken — which is the one thing it exists
+to detect. `set -eu` covers the other half, a missing `.env.local` or an unset variable.
 
 Expect `26`.
 

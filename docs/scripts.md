@@ -55,7 +55,7 @@ These touch the dataset. Read [runbook §4, §4a and §5](./runbook.md) before u
 | Script | | What it does |
 | --- | --- | --- |
 | `pnpm seed` | 🔴 🔑 | Writes the Nodo Conf fixture programme — 49 documents — into the dataset named by `NEXT_PUBLIC_SANITY_DATASET`. Idempotent: stable ids and `createOrReplace`, one transaction. **Only writes.** Documents no longer in the fixture set, and drafts, survive. |
-| `pnpm content:export` | 🟡 🔑 | Archives the dataset named in `.env.local`, with its assets, to `exports/<dataset>-<timestamp>.tar.gz`, which is git-ignored. **Required before any reset or non-dry-run migration** — it is the only rollback there is. Wrapped in `scripts/export.sh`, which reads `.env.local` itself and checks the archive exists afterwards. |
+| `pnpm content:export` | 🟡 🔑 | Archives the dataset named in `.env.local`, with its assets, to `exports/<dataset>-<timestamp>.tar.gz`, which is git-ignored. **Required before any reset or non-dry-run migration** — it is the only rollback there is. Wrapped in `scripts/export.sh`, which reads `.env.local` itself, writes with `umask 077`, and validates the tarball with `tar -tzf` before giving it its final name. |
 | `pnpm content:reset` | 🔴 🔑 | **Dry run by default.** Reports how many documents would be deleted, including drafts, and changes nothing. Add `-- --no-dry-run` to delete the four fixture-managed types and write the programme again. |
 
 ```bash
@@ -89,10 +89,16 @@ cannot show you a whole class of failure — documents that exist but are unread
 without credentials.
 
 ```bash
-source .env.local
-curl -s --get "https://$NEXT_PUBLIC_SANITY_PROJECT_ID.api.sanity.io/v2026-07-31/data/query/$NEXT_PUBLIC_SANITY_DATASET" \
+set -eu
+. ./.env.local
+curl -sS --fail-with-body --get \
+  "https://$NEXT_PUBLIC_SANITY_PROJECT_ID.api.sanity.io/v2026-07-31/data/query/$NEXT_PUBLIC_SANITY_DATASET" \
   --data-urlencode 'query=count(*[_type=="session"])'
 ```
+
+`--fail-with-body` matters: plain `curl -s` exits successfully on a 401 or a 404, so a check
+without it reports nothing wrong when public reads are broken — which is the one thing it exists
+to detect. `set -eu` covers the other half, a missing `.env.local` or an unset variable.
 
 The dataset comes from `.env.local`, the same place every content script reads it from. Hard-coding
 a dataset name in a verification command means eventually verifying one dataset and having changed
