@@ -78,6 +78,27 @@ A README that describes the finished system while the repository contains a scaf
 common way for a project to start lying about itself. Planned work belongs in
 `docs/roadmap.md`, where it is explicitly marked as planned.
 
+### Diagrams
+
+Use Mermaid, fenced as ```` ```mermaid ````. GitHub renders it natively, so a diagram stays in the
+document it explains, versions with the code, and is reviewable as a diff. Never commit exported
+images of diagrams — they rot silently the moment the thing they depict changes.
+
+**Include a diagram where prose is genuinely worse:**
+
+- Relationships between content types — an `erDiagram` shows cardinality that a paragraph fumbles.
+- Anything with ordering across components, such as a webhook invalidating a cache
+  (`sequenceDiagram`).
+- State a document moves through, such as a session's live status (`stateDiagram-v2`).
+- Where a request is served from, and what it crosses.
+
+**Do not add one where prose is fine.** A diagram restating a list of four files is decoration, and
+decoration in documentation costs the same to maintain as substance while carrying none. If the
+diagram and the surrounding text say the same thing, delete one of them.
+
+Label edges. An unlabelled arrow between two boxes asserts that a relationship exists without
+saying what it is, which is usually the part the reader needed.
+
 ### Decisions
 
 - Architecture Decision Records live in `docs/decisions/`, numbered and dated, following

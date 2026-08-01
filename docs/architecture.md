@@ -21,6 +21,28 @@ talks to the Content Lake. The Studio, running in the editor's browser, does —
 origin must be registered for CORS while the public site needs no such registration. The CORS
 asymmetry is already real and already verified; the server-side reading is not yet implemented.
 
+```mermaid
+flowchart LR
+    visitor["Attendee's browser"]
+    editor["Editor's browser"]
+
+    subgraph vercel["Vercel — one deployment"]
+        app["Next.js app<br/>server-rendered schedule"]
+        studio["Sanity Studio<br/>/studio"]
+    end
+
+    lake[("Sanity Content Lake<br/>managed, not self-hostable")]
+
+    visitor -->|"HTML"| app
+    editor -->|"loads Studio"| studio
+    app -->|"GROQ · server-side · no token"| lake
+    studio -.->|"GROQ + mutations · session auth · CORS"| lake
+```
+
+The dashed edge is the only one that leaves a browser, and it is the reason CORS exists in this
+system at all. Note what the diagram does **not** show: any path from an attendee's browser to the
+Content Lake. That absence is the design.
+
 ### The Studio's client boundary
 
 The Studio is rendered through an explicit `"use client"` boundary
