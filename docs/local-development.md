@@ -29,7 +29,7 @@ credentials.
 There is nothing to display yet — the schedule arrives in Milestone 4 — but the application boots
 and the environment is validated.
 
-### Editing content in the Studio
+### Seeding and editing content
 
 The Studio is served at `/studio` and **authenticates you as a signed-in Sanity user**, through a
 session in your browser. It does not use an API token, and no token in `.env.local` grants access
@@ -57,12 +57,15 @@ naming the missing variable. The template is [`.env.example`](../.env.example).
 | `NEXT_PUBLIC_SANITY_DATASET` | Browser | Everything | `production` | Throws on first read |
 | `NEXT_PUBLIC_SANITY_API_VERSION` | Browser | Everything | Pinned date, `2026-07-31` | Throws on first read |
 | `SANITY_API_READ_TOKEN` | Server only | Draft preview (Milestone 5) | Token with `viewer` role | Throws only where preview is used; published content is unaffected |
-| `SANITY_API_WRITE_TOKEN` | Server only | Seeding, export, migrations (Milestone 3) | Token with `editor` role | Throws only when those commands run |
 
 The `NEXT_PUBLIC_` prefix is what makes Next.js inline a value into the browser bundle. It is the
-mechanism, not a naming convention, which is why no token carries it. The two tokens are read
-through functions rather than at module scope, so importing this module from client code cannot
+mechanism, not a naming convention, which is why no token carries it. The read token is accessed
+through a function rather than at module scope, so importing this module from client code cannot
 pull a secret into the bundle.
+
+**There is no write token.** Seeding, dataset export and content migrations run through the Sanity
+CLI and authenticate the signed-in developer — `pnpm exec sanity login`, once per machine. A write
+token would sit unused in an environment file, which is a liability with no benefit.
 
 The project ID is not a secret. It is public by design, and treating it as one would be a false
 comfort — anyone holding it can read a public dataset directly over HTTP, from anywhere, with no
@@ -81,7 +84,29 @@ Nothing published to this dataset should be anything that cannot be public, beca
 
 ## Seeding content
 
-_Not implemented — Milestone 3._
+`pnpm seed` loads the Nodo Conf fixture programme — one event, four rooms, 18 speakers and 26
+sessions — into the dataset named in `.env.local`.
+
+```bash
+pnpm exec sanity login   # once per machine
+pnpm seed
+```
+
+It is idempotent: documents have stable ids derived from their slugs and are written with
+`createOrReplace`, so running it twice replaces rather than duplicates. A seed script that can only
+be run once is a script nobody dares run.
+
+The whole programme is written in a single transaction. A partially seeded conference is worse
+than an empty one, because references dangle and the schedule renders half an event.
+
+The fixture content is TypeScript rather than exported JSON, at `fixtures/nodo-conf.ts`, so that a
+change to the programme is reviewable as a diff. It is checked against the same rules the Studio
+enforces in `fixtures/nodo-conf.test.ts`, **before** anything is written.
+
+That check has to happen here because nothing else will do it. The Content Lake does not enforce
+schema validation: rules live in the Studio, and content written through the API or an import is
+accepted whether it satisfies them or not. Seeding a programme that its own schema would reject
+therefore succeeds silently, and the failure appears later as a Studio full of red.
 
 ## Common failures
 

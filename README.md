@@ -12,16 +12,22 @@ Seeded content describes **Nodo Conf**, a fictional two-day conference in Buenos
 
 ## Current state
 
-**Milestone 1 — Foundation, in progress.**
+**Milestones 1–3 complete. Milestone 4 — the public schedule — not started.**
 
 What works today:
 
 - A Next.js 16 application (App Router, React 19, TypeScript, Tailwind 4) serving an empty page.
-- Sanity Studio, running at `/studio`, connected to a Sanity project.
-- Project instructions, roadmap, and decision records.
+- Sanity Studio at `/studio`, with the full conference content model: events, rooms, speakers and
+  sessions.
+- Validation that refuses an impossible programme — two sessions cannot share a room at the same
+  time, and a session cannot fall outside the conference — while letting an unfinished one be
+  saved and published.
+- A complete fixture programme for Nodo Conf — 26 sessions across two days in four rooms — loaded
+  with `pnpm seed`.
+- 67 unit tests over the scheduling logic and the fixture programme.
 
-The Studio has no schema yet, so there is nothing to edit and nothing to display. The content
-model, the schedule, and everything else are in [`docs/roadmap.md`](./docs/roadmap.md).
+There is no public schedule yet. It is the next milestone in
+[`docs/roadmap.md`](./docs/roadmap.md).
 
 This section is updated at every milestone and at any commit that changes what the project can do.
 
@@ -51,6 +57,7 @@ origin registered for CORS; both are covered in [`docs/runbook.md`](./docs/runbo
 | --- | --- |
 | [`AGENTS.md`](./AGENTS.md) | Canonical contributor and agent instructions |
 | [`docs/roadmap.md`](./docs/roadmap.md) | Living roadmap — planned work and its status |
+| [`docs/scripts.md`](./docs/scripts.md) | Every `pnpm` script, what it writes, what it costs |
 | [`docs/decisions/`](./docs/decisions/) | Architecture Decision Records |
 | [`docs/architecture.md`](./docs/architecture.md) | How the system fits together, and why |
 | [`docs/testing.md`](./docs/testing.md) | What is tested automatically, what is verified by hand |

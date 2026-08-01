@@ -78,6 +78,27 @@ A README that describes the finished system while the repository contains a scaf
 common way for a project to start lying about itself. Planned work belongs in
 `docs/roadmap.md`, where it is explicitly marked as planned.
 
+### Diagrams
+
+Use Mermaid, fenced as ```` ```mermaid ````. GitHub renders it natively, so a diagram stays in the
+document it explains, versions with the code, and is reviewable as a diff. Never commit exported
+images of diagrams — they rot silently the moment the thing they depict changes.
+
+**Include a diagram where prose is genuinely worse:**
+
+- Relationships between content types — an `erDiagram` shows cardinality that a paragraph fumbles.
+- Anything with ordering across components, such as a webhook invalidating a cache
+  (`sequenceDiagram`).
+- State a document moves through, such as a session's live status (`stateDiagram-v2`).
+- Where a request is served from, and what it crosses.
+
+**Do not add one where prose is fine.** A diagram restating a list of four files is decoration, and
+decoration in documentation costs the same to maintain as substance while carrying none. If the
+diagram and the surrounding text say the same thing, delete one of them.
+
+Label edges. An unlabelled arrow between two boxes asserts that a relationship exists without
+saying what it is, which is usually the part the reader needed.
+
 ### Decisions
 
 - Architecture Decision Records live in `docs/decisions/`, numbered and dated, following
@@ -125,6 +146,23 @@ common way for a project to start lying about itself. Planned work belongs in
 - Work stops at milestone boundaries for human review.
 - Changes are reviewed by the repository owner, who may perform commits directly.
 
+### Precedence
+
+Guidance can conflict. When it does, this order settles it:
+
+1. **Architecture Decision Records** in `docs/decisions/`.
+2. **This file.**
+3. **Vendor guidance** — Sanity's `sanity-best-practices` agent skill, and Sanity's documentation.
+
+Vendor guidance is well-informed and worth following by default; it is not written for this
+project. Where it contradicts a recorded decision, the decision stands — ADR-0001 keeps the Studio
+embedded although the skill assumes a standalone one, and the freshness decision keeps webhook
+invalidation although the skill's Next.js guide assumes the Live Content API.
+
+**A conflict is not permission to reverse a decision quietly.** If the vendor raises an argument
+the ADR did not consider, that is a new ADR superseding the old one, with the argument written
+down. Silently drifting toward a default is how a repository loses its reasoning.
+
 ### Honesty rules
 
 - **Never claim a test, build, type check, or performance measurement passed unless it actually
@@ -140,9 +178,15 @@ common way for a project to start lying about itself. Planned work belongs in
 
 These are invariants. Breaking one requires an ADR that supersedes it.
 
-1. **All Sanity access is confined to `src/lib/sanity/`.** Nothing elsewhere imports the Sanity
-   client. Routes and components consume typed view models, never raw Sanity documents. This keeps
-   the content source replaceable and the application auditable.
+1. **All Sanity access in the application is confined to `src/lib/sanity/`.** No route, component
+   or utility elsewhere imports the Sanity client; they consume typed view models, never raw
+   Sanity documents. This keeps the content source replaceable and the application auditable.
+
+   The Studio is not bound by this and cannot be. Schema validation in `sanity/lib/validation.ts`
+   queries sibling documents through the client Sanity hands it, because a rule like "this room is
+   already booked" is a question about the dataset. That code ships to the Studio, never to the
+   public application, and would be the first thing discarded if the content source were replaced
+   — along with the schema it validates.
 2. **One data-access wrapper expresses caching policy.** Cache tags and revalidation live in a
    single fetch helper — not scattered across call sites.
 3. **Server Components by default.** A Client Component requires a reason that could not be met on
@@ -176,26 +220,20 @@ Treated as an architectural concern, not a final pass.
 
 ## Commands
 
-Available now:
+Every script, with what it writes and what it costs to run, is in
+**[`docs/scripts.md`](docs/scripts.md)** — the canonical list. The ones used constantly:
 
 ```bash
-pnpm dev              # Next app on / and Sanity Studio on /studio
-pnpm build            # production build
-pnpm lint             # eslint
-pnpm typecheck        # tsc --noEmit
-pnpm schema:extract   # schema.json      (commit the result)
-pnpm types:generate   # sanity.types.ts  (commit the result)
-pnpm schema:check     # regenerate both and fail on a diff
-pnpm migration:create # scaffold a content migration
-pnpm migration:run    # dry run by default; --no-dry-run to apply
+pnpm dev          # app on / and Studio on /studio
+pnpm typecheck    # tsc --noEmit
+pnpm lint         # eslint
+pnpm test         # unit tests
+pnpm schema:check # regenerate schema.json and sanity.types.ts, fail on a diff
 ```
 
-Not implemented yet — do not reference these as if they work:
-
-```bash
-pnpm test             # unit tests            (Milestone 2)
-pnpm seed             # load fixture content  (Milestone 3)
-```
+**Anything destructive dries-run by default.** `content:reset` and `migration:run` both report and
+exit unless given `-- --no-dry-run`, because a destructive command whose default is to destroy will
+eventually be run by accident.
 
 Operational procedures — provisioning, tokens, CORS, backup and restore, content migrations,
 webhook configuration, deployment, and incident handling — are in `docs/runbook.md`.
@@ -208,6 +246,7 @@ webhook configuration, deployment, and incident handling — are in `docs/runboo
 | --- | --- |
 | `README.md` | What the project is and how to run it |
 | `docs/roadmap.md` | Living roadmap, milestone by milestone |
+| `docs/scripts.md` | Every pnpm script, what it writes, what it costs |
 | `docs/architecture.md` | How the system fits together, and why |
 | `docs/decisions/` | Architecture Decision Records |
 | `docs/testing.md` | What is tested automatically, and what is verified by hand |

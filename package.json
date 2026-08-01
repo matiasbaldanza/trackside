@@ -13,14 +13,20 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "schema:extract": "sanity schema extract --enforce-required-fields --force",
-    "types:generate": "sanity typegen generate",
-    "schema:check": "pnpm schema:extract && pnpm types:generate && git add -N schema.json sanity.types.ts && git diff --exit-code -- schema.json sanity.types.ts",
-    "migration:create": "sanity migration create",
-    "migration:run": "sanity migration run"
+    "schema:extract": "./node_modules/.bin/sanity schema extract --enforce-required-fields --force",
+    "types:generate": "./node_modules/.bin/sanity typegen generate",
+    "schema:check": "./node_modules/.bin/sanity schema extract --enforce-required-fields --force && ./node_modules/.bin/sanity typegen generate && git add -N schema.json sanity.types.ts && git diff --exit-code -- schema.json sanity.types.ts",
+    "migration:create": "./node_modules/.bin/sanity migration create",
+    "migration:run": "./node_modules/.bin/sanity migration run",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "seed": "./node_modules/.bin/sanity exec scripts/seed.ts --with-user-token",
+    "content:export": "sh scripts/export.sh",
+    "content:reset": "./node_modules/.bin/sanity exec scripts/reset.ts --with-user-token"
   },
   "dependencies": {
     "@sanity/client": "^7.26.0",
+    "@sanity/icons": "^5.2.1",
     "@sanity/image-url": "^2.1.1",
     "@sanity/vision": "^6.8.0",
     "next": "16.2.12",
@@ -38,6 +44,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.12",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.10"
   }
 }

@@ -10,6 +10,18 @@ Updated as work proceeds, not reconstructed at the end.
 
 Claude Code (Opus 5), driven interactively from the repository. CodeRabbit reviews pull requests.
 
+Sanity's own [`sanity-best-practices`](https://github.com/sanity-io/agent-toolkit) agent skill is
+installed locally, from commit `dfcdd28`. It is documentation only — 25 markdown files, nothing
+executable — and it is advisory: `AGENTS.md` records the precedence when it disagrees with a
+decision made here.
+
+It was added part-way through, after the content model was built, which makes its value measurable
+rather than assumed. Of the three Sanity-specific mistakes made before it was installed, it would
+have prevented one outright (`@sanity/icons` v5 subpath imports — the subject of its most recent
+commit), steered away from a second (it advises against slug-derived document ids, which is how the
+dotted-id failure arose), and missed the third entirely (`rule.warning(message)` adding no
+constraint: its examples use the correct form but never name the trap).
+
 ## Milestone 1 — Foundation
 
 ### What the agent did
@@ -75,6 +87,70 @@ that reads `process.env` directly, deliberately: the Sanity CLI loads it in plai
 Next.js module resolution or the `@/` path alias, and `src/lib/env.ts` throws at read time on any
 missing variable, which would break CLI commands that need none of them. The invariant in
 `AGENTS.md` was amended to state the exception rather than the code changed to hide it.
+
+## Milestone 3 — Fixture content
+
+### Where agent output was wrong
+
+Two errors, both silent, both caught only by checking the result rather than the report.
+
+- **Fixture documents were given ids like `session.keynote`.** The Content Lake treats any `_id`
+  containing a dot as private regardless of dataset visibility — the same mechanism that keeps
+  `drafts.*` unreadable. Seeding reported success, all 49 documents were written, and the Studio
+  displayed the full conference. The public API returned nothing. The public schedule would have
+  been empty while every authenticated view looked perfect.
+
+  The agent had documented this exact rule in `docs/runbook.md` one milestone earlier, as the
+  reason a public dataset does not leak drafts, and then wrote fixture ids that violated it.
+
+- **Session times were stored with a UTC offset rather than normalised.** Sanity persists a
+  datetime exactly as given, so `2026-09-24T08:30:00-03:00` was stored verbatim while the Studio's
+  own input writes `Z`-suffixed UTC. GROQ compares datetime strings lexicographically unless cast,
+  so a dataset holding both forms filters incorrectly. The instants were right; every range query
+  over them would have been wrong.
+
+Both are now enforced by tests over the fixture data, and both are recorded where they belong —
+the id rule in the runbook, the storage format in ADR-0002.
+
+### Found by looking at the Studio, not the code
+
+Two things no test would have caught, both surfaced by the repository owner opening the Studio:
+
+- **Validation errors were attached to the document rather than to fields.** The rules worked and
+  the messages were specific, but the editor saw only *"There are validation errors that need to be
+  fixed before this document can be published"* unless they opened a panel. The care taken over the
+  message wording was invisible in the place it mattered.
+- **Session previews truncated.** Full room names pushed the subtitle past the width of the list
+  pane, and what disappeared was the duration — the part an operator most needs. Fixed by preferring
+  the room's short name, which is what that field was for.
+
+Neither is a correctness bug, and neither would have failed a test. They are the difference between
+validation that technically works and validation an editor can use, which is the whole argument
+this project is making.
+
+### The pattern, restated
+
+Milestone 1's errors were confident claims about unverified things. Milestone 3's were different
+and worse: **operations that reported success while achieving nothing.** `pnpm seed` printed
+"Done" and wrote 49 documents that no reader could see.
+
+The generalisation is that a tool's own success message is not evidence. What settled both cases
+was querying the public API as an anonymous reader — checking the result the system is supposed to
+produce, from the position of the person it is produced for.
+
+## Where this project diverges from vendor guidance
+
+Recorded so the divergence is visible rather than accidental.
+
+**Document ids.** The skill says to let Sanity generate `_id` values and to reserve explicit ids
+for singletons; the fixture programme uses slug-derived ids throughout. Recorded as
+[ADR-0004](./decisions/0004-derive-fixture-document-ids-from-slugs.md), which argues the two
+alternatives that follow the guidance and states the cost of the choice — renaming a fixture slug
+creates a second document rather than renaming the first, so a rename means `content:reset`, not
+`seed`. Content created by editors in the Studio gets generated ids as normal.
+
+**Studio placement and content freshness.** Both covered by ADRs, both deliberate, both against
+the vendor default. See [ADR-0001](./decisions/0001-embed-sanity-studio-in-the-next-application.md).
 
 ## What this means for reviewing the code
 

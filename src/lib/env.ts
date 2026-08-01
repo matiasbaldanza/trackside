@@ -50,9 +50,10 @@ export function readToken(): string {
 }
 
 /**
- * Token for writing content -- seeding, exports and content migrations.
- * Server-only, and never used by the running application.
+ * There is deliberately no write token here.
+ *
+ * Nothing in this application writes content. Seeding, dataset export and
+ * content migrations all run through the Sanity CLI, which authenticates the
+ * signed-in developer -- so a write token would be an unused credential, and
+ * an unused credential is a liability with no compensating benefit.
  */
-export function writeToken(): string {
-  return required("SANITY_API_WRITE_TOKEN", process.env.SANITY_API_WRITE_TOKEN);
-}

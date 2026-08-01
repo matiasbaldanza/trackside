@@ -93,38 +93,46 @@ for anyone but you.
 
 ## 2. Tokens
 
-> **Unverified.** Not yet executed.
+Most operations here need no token at all.
 
-Reading published content needs no token. Tokens are needed for two things: writing content
-(seeding, content migrations) and reading unpublished drafts (preview).
+**Reading published content** needs nothing — the dataset is public.
 
-Create tokens under **API → Tokens** in the project console, or from the CLI:
+**Writing content** — seeding, dataset export, content migrations — authenticates the signed-in
+developer through the CLI. One step, once per machine:
 
 ```bash
-pnpm dlx sanity@latest tokens create "trackside seed" --role editor
-pnpm dlx sanity@latest tokens create "trackside preview" --role viewer
+pnpm exec sanity login
 ```
 
-On the Free plan the available roles are `viewer`, `editor`, and `deploy-studio`.
+**There is deliberately no write token.** One would sit unused in an environment file, which is a
+liability with nothing to show for it. If a non-interactive context ever needs to write —
+continuous integration seeding a preview dataset, say — that is the point at which to create one,
+and to record why here.
+
+**Reading unpublished drafts** for preview is the only case that needs a token, because it runs on
+a deployed server where no developer is signed in. Create it under **API → Tokens**, or:
+
+```bash
+pnpm exec sanity tokens create "trackside preview" --role viewer
+```
+
+On the Free plan the available roles are `viewer`, `editor` and `deploy-studio`. This one is
+`viewer`: it reads drafts, and it must not be able to write.
 
 | Token | Role | Purpose | Lives in |
 | --- | --- | --- | --- |
-| `trackside seed` | `editor` | Seeding, exports, content migrations | `.env.local` as `SANITY_API_WRITE_TOKEN` |
 | `trackside preview` | `viewer` | Reading drafts for preview | `.env.local` as `SANITY_API_READ_TOKEN`, and the deployment's environment |
 
 **The token value is shown once.** If it is lost, revoke it and create another; there is no way to
 read it back.
 
-Neither token is ever exposed to the browser. Both are read only in server code, and neither
-carries the `NEXT_PUBLIC_` prefix — that prefix is what determines whether Next.js inlines a value
-into the client bundle, so the naming is the safeguard, not a convention.
+It is never exposed to the browser: it is read only in server code, and does not carry the
+`NEXT_PUBLIC_` prefix — that prefix is what determines whether Next.js inlines a value into the
+client bundle, so the naming is the safeguard, not a convention.
 
 **Rotation:** create the replacement first, update `.env.local` and the deployment environment,
-confirm the system still works, and only then revoke the old token. Revoking first causes an
-outage for the time it takes to deploy.
-
-**Verify:** a token works if `pnpm seed` writes successfully (once that script exists — Milestone
-3).
+confirm the system still works, and only then revoke the old one. Revoking first causes an outage
+for as long as a deploy takes.
 
 ---
 
@@ -163,12 +171,172 @@ production — the public schedule itself is unaffected, because it is rendered 
 
 ## 4. Seeding content
 
-_Unverified — Milestone 3._ Loading fixture content into a dataset, and targeting a dataset other
-than the default.
+> **Verified 2026-08-01.**
+
+```bash
+pnpm exec sanity login   # once per machine
+pnpm seed
+```
+
+Loads one event, four rooms, 18 speakers and 26 sessions into the dataset named by
+`NEXT_PUBLIC_SANITY_DATASET` in `.env.local`. To target a different dataset, change that value —
+the script deliberately has no dataset argument of its own, so there is one place that decides
+which dataset a command touches.
+
+**Idempotent.** Documents have stable ids derived from their slugs and are written with
+`createOrReplace`, so a second run replaces rather than duplicates. It is also a single
+transaction: a partially seeded conference is worse than an empty one, because references dangle
+and the schedule renders half an event.
+
+**Verify** — and check the public API, not only the Studio. The Studio is authenticated and will
+happily show documents that no unauthenticated reader can see:
+
+```bash
+set -eu
+. ./.env.local
+curl -sS --fail-with-body --get \
+  "https://$NEXT_PUBLIC_SANITY_PROJECT_ID.api.sanity.io/v2026-07-31/data/query/$NEXT_PUBLIC_SANITY_DATASET" \
+  --data-urlencode 'query=count(*[_type=="session"])'
+```
+
+`--fail-with-body` matters: plain `curl -s` exits successfully on a 401 or a 404, so a check
+without it reports nothing wrong when public reads are broken — which is the one thing it exists
+to detect. `set -eu` covers the other half, a missing `.env.local` or an unset variable.
+
+This must return 26. If it returns 0 while the Studio looks complete, the documents have ids
+containing a dot — see the note below.
+
+`/studio` should list 26 sessions across two days with no validation errors. Some speakers will
+show a warning for a missing portrait or biography; that is intended, and is what the warning
+severity exists to express.
+
+### Document ids must not contain a dot
+
+The Content Lake treats any document whose `_id` contains a dot as private, regardless of dataset
+visibility. That is the mechanism keeping `drafts.*` unreadable on a public dataset, and it applies
+to every id, not only drafts.
+
+The first seeded programme used ids like `session.keynote`. Seeding reported success, all 49
+documents were written, the Studio showed the full conference — and the public API returned
+nothing. The failure is completely silent from an authenticated seat. Fixture ids now use hyphens,
+and a test enforces it.
+
+## 4a. Resetting the programme
+
+> **Verified 2026-08-01.** Dry run and real run both executed.
+
+Seeding only writes. It replaces the documents in the fixture set and leaves everything else
+alone, so a session deleted from the fixtures, or a draft created by editing in the Studio, will
+still be there afterwards. Resetting removes the fixture-managed documents first.
+
+```bash
+pnpm content:export                   # required first -- this is the only rollback
+pnpm content:reset                    # dry run: reports, changes nothing
+pnpm content:reset -- --no-dry-run    # actually does it
+```
+
+**Dry run is the default**, mirroring `sanity migrations run`. A destructive command whose default
+is to destroy will eventually be run by accident, and matching a convention the project already
+uses is one fewer thing to remember.
+
+The dry run reports what would go, including how many are drafts:
+
+```text
+6rj0xvsm/production
+  would delete : 50 documents (1 drafts)
+  would write  : 1 event · 4 rooms · 18 speakers · 26 sessions
+  types touched: event, track, speaker, session
+```
+
+Drafts are included deliberately. Deleting only published documents leaves `drafts.*` counterparts
+behind, and they reappear in the Studio as unpublished edits to documents that no longer exist.
+
+Only `event`, `track`, `speaker` and `session` are touched. Nothing else in the dataset is
+affected, which is why this is preferable to deleting and recreating the dataset.
+
+**Verify** against the public API, not the Studio — the Studio is authenticated and cannot show
+this class of failure:
+
+```bash
+set -eu
+. ./.env.local
+curl -sS --fail-with-body --get \
+  "https://$NEXT_PUBLIC_SANITY_PROJECT_ID.api.sanity.io/v2026-07-31/data/query/$NEXT_PUBLIC_SANITY_DATASET" \
+  --data-urlencode 'query=count(*[_type=="session"])'
+```
+
+`--fail-with-body` matters: plain `curl -s` exits successfully on a 401 or a 404, so a check
+without it reports nothing wrong when public reads are broken — which is the one thing it exists
+to detect. `set -eu` covers the other half, a missing `.env.local` or an unset variable.
+
+Expect `26`.
+
+### Doing it by hand
+
+If the script is unavailable or you want to see each step:
+
+```bash
+source .env.local
+
+pnpm exec sanity documents query '*[_type in ["event","track","speaker","session"]]._id' \
+  --api-version 2026-07-31 --dataset "$NEXT_PUBLIC_SANITY_DATASET" \
+  | sed -n '/^\[/,$p' \
+  | python3 -c "import sys,json;print('\n'.join(json.load(sys.stdin)))" \
+  | xargs -n 10 ./node_modules/.bin/sanity documents delete --dataset "$NEXT_PUBLIC_SANITY_DATASET"
+
+pnpm seed
+```
+
+**Read the dataset from `.env.local` rather than typing it.** Every content script resolves it the
+same way, and a literal dataset name in a delete command is how you eventually verify one dataset
+having emptied another.
+
+Two things that are not obvious:
+
+- **`--api-version` is required on `query`.** Without it the CLI prints a warning line to stdout
+  that breaks JSON parsing.
+- **`xargs -n 10` is not optional.** Passing every id as a single shell word makes the CLI treat
+  the whole string as one document id and reject it.
+
+### Starting the dataset over completely
+
+Heavier, and it discards document history along with the content:
+
+```bash
+source .env.local
+pnpm exec sanity dataset delete "$NEXT_PUBLIC_SANITY_DATASET"
+pnpm exec sanity dataset create "$NEXT_PUBLIC_SANITY_DATASET" --visibility public
+pnpm seed
+```
+
+CORS origins are configured per project, so they survive. **`--visibility public` is not
+optional** — a private dataset breaks anonymous reads, and the symptom is identical to the
+dotted-id failure above: the Studio looks complete, the public API returns nothing.
+
+---
 
 ## 5. Backup and restore
 
-_Unverified — Milestone 3._ Exporting a dataset with its assets, and restoring one.
+> **Export verified 2026-08-01. Restore unverified** — the export has not yet been imported back.
+
+```bash
+pnpm content:export      # writes exports/production-<timestamp>.tar.gz
+```
+
+The `exports/` directory is ignored by git. A dataset export is a full copy of the content,
+including anything unpublished, so it belongs on disk rather than in the repository.
+
+Restoring:
+
+```bash
+pnpm exec sanity dataset import exports/<file>.tar.gz production --replace
+```
+
+**An export is required before any content migration that is not a dry run**, and before any bulk
+delete. Content migrations are not reliably invertible; restore is the rollback.
+
+This was used in earnest during Milestone 3: 48 documents with unusable ids had to be removed, and
+the export taken beforehand made the deletion reversible rather than final.
 
 **An export is required before any content migration that is not a dry run.** Content migrations
 are not reliably invertible; restore is the rollback.

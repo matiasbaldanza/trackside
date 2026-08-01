@@ -4,6 +4,7 @@ import { structureTool } from "sanity/structure";
 
 import { sanityConfig } from "@/lib/env";
 import { schemaTypes } from "./sanity/schemas";
+import { structure } from "./sanity/structure";
 
 /**
  * Sanity Studio, served by the Next.js application at /studio.
@@ -26,8 +27,27 @@ export default defineConfig({
     types: schemaTypes,
   },
 
+  /**
+   * The event is a singleton, and enforcing that takes two separate things.
+   *
+   * Removing duplicate and delete stops the document being copied or removed
+   * once it exists. That alone is not enough: the global create menu would
+   * still offer "Event" and produce a second one with a generated id, which
+   * the custom structure would then never show. Removing it from the new
+   * document options closes that path.
+   */
+  document: {
+    actions: (previous, { schemaType }) =>
+      schemaType === "event"
+        ? previous.filter(({ action }) => action !== "duplicate" && action !== "delete")
+        : previous,
+
+    newDocumentOptions: (previous) =>
+      previous.filter((template) => template.templateId !== "event"),
+  },
+
   plugins: [
-    structureTool(),
+    structureTool({ structure }),
     /**
      * Vision runs GROQ queries against the dataset from inside the Studio.
      * Included because queries here encode scheduling rules, and being able
