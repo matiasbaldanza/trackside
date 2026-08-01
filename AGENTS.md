@@ -131,8 +131,11 @@ These are invariants. Breaking one requires an ADR that supersedes it.
 3. **Server Components by default.** A Client Component requires a reason that could not be met on
    the server, stated in a comment at the boundary. Filters and navigation use `<Link>` and
    `searchParams`, not client state.
-4. **Environment variables are validated once**, in one module. Nothing reads `process.env`
-   directly.
+4. **Environment variables are validated once**, in `src/lib/env.ts`. No application or Studio code
+   reads `process.env` directly. `sanity.cli.ts` is the single exception and is annotated as such:
+   it is loaded by the Sanity CLI in plain Node, without Next.js module resolution or the `@/`
+   path alias, and its failure mode is a developer's command rather than a visitor's request.
+   Adding a second exception requires an ADR.
 5. **Scheduling logic lives in pure functions** shared by the Sanity schema and the test suite, so
    validation is testable without booting a Studio.
 6. **Generated artefacts are committed** (`schema.json`, `sanity.types.ts`) and verified in CI. A
@@ -156,15 +159,25 @@ Treated as an architectural concern, not a final pass.
 
 ## Commands
 
+Available now:
+
 ```bash
 pnpm dev              # Next app on / and Sanity Studio on /studio
 pnpm build            # production build
 pnpm lint             # eslint
 pnpm typecheck        # tsc --noEmit
-pnpm test             # unit tests
 pnpm schema:extract   # schema.json      (commit the result)
 pnpm types:generate   # sanity.types.ts  (commit the result)
-pnpm seed             # load fixture content into a dataset
+pnpm schema:check     # regenerate both and fail on a diff
+pnpm migration:create # scaffold a content migration
+pnpm migration:run    # dry run by default; --no-dry-run to apply
+```
+
+Not implemented yet — do not reference these as if they work:
+
+```bash
+pnpm test             # unit tests            (Milestone 2)
+pnpm seed             # load fixture content  (Milestone 3)
 ```
 
 Operational procedures — provisioning, tokens, CORS, backup and restore, content migrations,

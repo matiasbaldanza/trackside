@@ -30,18 +30,31 @@ end-to-end journey.
 _Milestone 7._ Type checking, linting, a production build, generated-artefact freshness, and the
 test suites above.
 
-## Verified by hand
+## To be checked by hand
 
 Some behaviour is not worth automating here, and pretending otherwise would produce tests that
-assert the implementation rather than the behaviour. These are checked manually and the results
-recorded:
+assert the implementation rather than the behaviour. **None of the following has been run yet** —
+each is planned for the milestone noted, and results are recorded below once they exist.
 
-- Studio validation as an editor experiences it — whether the message explains the conflict.
-- The live operations pane and the status action, on a phone.
-- Webhook delivery and cache invalidation end to end, against the deployed site.
-- A screen-reader pass over the timetable.
-- A real-handset pass on the mobile layout.
+- ⬜ Studio validation as an editor experiences it — whether the message explains the conflict.
+  _Milestone 2._
+- ⬜ The live operations pane and the status action, on a phone. _Milestone 5._
+- ⬜ Webhook delivery and cache invalidation end to end, against the deployed site. _Milestone 5._
+- ⬜ A screen-reader pass over the timetable. _Milestone 6._
+- ⬜ A real-handset pass on the mobile layout. _Milestone 6._
 
 ## Results
 
-_Recorded here as checks are run._
+Only checks that actually ran appear here.
+
+**2026-07-31 — Milestone 1**
+
+| Check | Result |
+| --- | --- |
+| `pnpm typecheck` | Clean |
+| `pnpm lint` | Clean |
+| `pnpm build` | Compiled; 3 static routes |
+| `/` and `/studio` over HTTP | 200 |
+| Studio boots in a browser | Renders, authenticates, reports empty schema, no console errors |
+| Dataset readable without credentials | HTTP 200 unauthenticated |
+| Studio dependencies absent from `/` | 7 scripts, 613 KB uncompressed, none containing Sanity code |

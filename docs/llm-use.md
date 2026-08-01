@@ -4,26 +4,67 @@ An honest record of how coding agents were used on this project, and what stayed
 control. Kept because "AI-assisted" covers everything from autocomplete to unreviewed generation,
 and the difference matters to anyone reading this code.
 
-> **Outline.** Updated as work proceeds, not reconstructed at the end.
+Updated as work proceeds, not reconstructed at the end.
 
 ## Tooling
 
-Claude Code (Opus 5), driven interactively from the repository.
+Claude Code (Opus 5), driven interactively from the repository. CodeRabbit reviews pull requests.
 
-## What agents were used for
+## Milestone 1 — Foundation
 
-_Recorded as it happens._
+### What the agent did
 
-## What stayed manual
+- Scaffolded the Next.js application and wrote the Sanity configuration, the Studio route, and
+  `src/lib/env.ts`.
+- Drafted every document in `docs/`, `AGENTS.md`, `CLAUDE.md`, and `README.md`.
+- Diagnosed the `/studio` build failure — `swr` having no default export under the `react-server`
+  condition — and implemented the client-boundary fix.
+- Ran the checks recorded in `docs/testing.md` and measured the route payloads cited in ADR-0001.
 
-_Recorded as it happens._ Expected to include: the product concept and its scope; the choice of
-content model; every decision recorded in `docs/decisions/`; review of all changes before commit.
+### What stayed manual
 
-## Where agent output was wrong or had to be rejected
+- The product concept and its scope. The conference framing, and the decision that live schedule
+  changes are the interesting problem, came from the repository owner — including rejecting an
+  earlier proposal in favour of this one.
+- Repository and content naming.
+- The choice to keep a single package rather than split into a workspace. The agent recommended it
+  and argued the case; the decision was the owner's, taken after asking what Sanity's own guidance
+  says and why.
+- Creating the Sanity project, issuing tokens, and registering the CORS origin.
+- Every commit and merge. All changes were reviewed before commit.
 
-_Recorded as it happens._ This section exists because it is the useful one. An account of agent
-use with nothing in it is not an account.
+### Where agent output was wrong or was rejected
+
+This section exists because it is the useful one.
+
+- **The agent claimed nothing had been pushed to the remote when both branches were already
+  pushed.** It had not checked. The correction mattered: an amended commit then required a
+  force push rather than the ordinary one it had described.
+- **`docs/local-development.md` stated that editing content in the Studio requires an API token.**
+  That is wrong — the embedded Studio authenticates the signed-in Sanity user through a browser
+  session, and tokens serve only server-side and command-line operations. Caught in review by
+  CodeRabbit, not by the agent, and not by the owner.
+- **ADR-0001 asserted that Studio dependencies do not reach the public route's payload without
+  measuring it.** The repository's own rules forbid claiming an unrun result. Also caught by
+  CodeRabbit. The claim turned out to be true, and the ADR now carries the measurement instead of
+  the assertion — but it was an assertion when it was written.
+- **`AGENTS.md` listed `pnpm seed` among runnable commands** before the script existed, and stated
+  an environment-variable invariant that its own `sanity.cli.ts` exception contradicted.
+
+The pattern is consistent and worth naming: the agent's errors were **confident statements about
+things it had not verified**, not mistakes in code. The code compiled and the prose was plausible.
+That is the failure mode to review for.
+
+### One review comment was rejected
+
+CodeRabbit asked that `sanity.cli.ts` import the centralised environment module. It is the one file
+that reads `process.env` directly, deliberately: the Sanity CLI loads it in plain Node without
+Next.js module resolution or the `@/` path alias, and `src/lib/env.ts` throws at read time on any
+missing variable, which would break CLI commands that need none of them. The invariant in
+`AGENTS.md` was amended to state the exception rather than the code changed to hide it.
 
 ## What this means for reviewing the code
 
-_To be written._
+Read the claims, not just the code. Anywhere this repository asserts that something was measured,
+verified, or observed, that statement is the part most worth checking — it is where the agent has
+historically been wrong, and it is why `docs/testing.md` records only checks that actually ran.

@@ -13,8 +13,9 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "schema:extract": "sanity schema extract --enforce-required-fields",
+    "schema:extract": "sanity schema extract --enforce-required-fields --force",
     "types:generate": "sanity typegen generate",
+    "schema:check": "pnpm schema:extract && pnpm types:generate && git add -N schema.json sanity.types.ts && git diff --exit-code -- schema.json sanity.types.ts",
     "migration:create": "sanity migration create",
     "migration:run": "sanity migration run"
   },

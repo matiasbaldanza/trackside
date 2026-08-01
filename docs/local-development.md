@@ -1,7 +1,7 @@
 # Local development
 
-> **Outline.** Written as setup is actually performed, so the steps are the ones that were run
-> rather than the ones that ought to work.
+> Written as setup is actually performed, so the steps are the ones that were run rather than the
+> ones that ought to work.
 
 ## Requirements
 
@@ -13,26 +13,67 @@
 There are two ways to run this project, and they need different things. The distinction matters:
 one requires no account at all.
 
-### Reading the published programme
+### Reading published content
 
-_To be written in Milestone 4._ Clone, install, copy the example environment file, run. No Sanity
-account and no token — published content reads without credentials.
+Clone, install, copy the environment template, run:
 
-### Editing content
+```bash
+pnpm install
+cp .env.example .env.local   # then set NEXT_PUBLIC_SANITY_PROJECT_ID
+pnpm dev
+```
 
-_To be written in Milestone 3._ Requires your own Sanity project, a dataset, and an API token,
-because seeding and editing write to a dataset. Covered step by step in
-[`runbook.md`](./runbook.md).
+No Sanity account, no token. The dataset is public, so published content reads without
+credentials.
+
+There is nothing to display yet — the schedule arrives in Milestone 4 — but the application boots
+and the environment is validated.
+
+### Editing content in the Studio
+
+The Studio is served at `/studio` and **authenticates you as a signed-in Sanity user**, through a
+session in your browser. It does not use an API token, and no token in `.env.local` grants access
+to it.
+
+What it needs:
+
+1. Membership of the Sanity project (being its owner counts).
+2. The origin registered as a CORS origin with credentials allowed — see
+   [`runbook.md`](./runbook.md) section 3. Without it the Studio loads and then reports that it is
+   not connected to a project.
+
+API tokens are a separate mechanism entirely, used only by server-side and command-line
+operations: seeding, dataset export, content migrations, and reading drafts for preview. They are
+never involved in signing in to the Studio.
 
 ## Environment variables
 
-_To be written in Milestone 1._ Each variable, whether it is public or server-only, and what
-breaks without it.
+All environment access goes through `src/lib/env.ts`, which validates on read and throws a message
+naming the missing variable. The template is [`.env.example`](../.env.example).
+
+| Variable | Visibility | Required for | Source | If missing |
+| --- | --- | --- | --- | --- |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | Browser | Everything | Project dashboard | Throws on first read; app and Studio both fail to start |
+| `NEXT_PUBLIC_SANITY_DATASET` | Browser | Everything | `production` | Throws on first read |
+| `NEXT_PUBLIC_SANITY_API_VERSION` | Browser | Everything | Pinned date, `2026-07-31` | Throws on first read |
+| `SANITY_API_READ_TOKEN` | Server only | Draft preview (Milestone 5) | Token with `viewer` role | Throws only where preview is used; published content is unaffected |
+| `SANITY_API_WRITE_TOKEN` | Server only | Seeding, export, migrations (Milestone 3) | Token with `editor` role | Throws only when those commands run |
+
+The `NEXT_PUBLIC_` prefix is what makes Next.js inline a value into the browser bundle. It is the
+mechanism, not a naming convention, which is why no token carries it. The two tokens are read
+through functions rather than at module scope, so importing this module from client code cannot
+pull a secret into the bundle.
+
+The project ID is not a secret. It is public by design, and access is bounded by dataset
+visibility and CORS.
 
 ## Seeding content
 
-_To be written in Milestone 3._
+_Not implemented — Milestone 3._
 
 ## Common failures
 
-_Recorded as they are encountered, not guessed at in advance._
+Recorded as they are encountered, not guessed at in advance.
+
+**The Studio loads, then says it is not connected to a project.** The origin is not registered for
+CORS. Use the **Add CORS origin** button on that screen. Observed 2026-07-31.

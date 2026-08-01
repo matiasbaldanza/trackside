@@ -8,15 +8,18 @@
 
 Three parts:
 
-- **The Next.js application** — the public schedule, rendered on the server, deployed to Vercel.
-- **Sanity Studio** — the editorial interface, served by that same application at `/studio`. See
+- **The Next.js application** — will serve the public schedule, rendered on the server, deployed to
+  Vercel. It currently serves an empty page; the schedule arrives in Milestone 4.
+- **Sanity Studio** — the editorial interface, served by that same application at `/studio`.
+  Running, with an empty schema. See
   [ADR-0001](./decisions/0001-embed-sanity-studio-in-the-next-application.md).
-- **Sanity's Content Lake** — where content actually lives. A managed service with no self-hosted
+- **Sanity's Content Lake** — where content lives. A managed service with no self-hosted
   equivalent; the Studio and the application are both clients of it.
 
-The application reads content on the server, so a visitor's browser never talks to the Content
-Lake. The Studio, running in the editor's browser, does — which is why its origin must be
-registered for CORS while the public site needs no such registration.
+**Intended once content exists:** the application reads on the server, so a visitor's browser never
+talks to the Content Lake. The Studio, running in the editor's browser, does — which is why its
+origin must be registered for CORS while the public site needs no such registration. The CORS
+asymmetry is already real and already verified; the server-side reading is not yet implemented.
 
 ### The Studio's client boundary
 
@@ -29,7 +32,7 @@ React Server Components graph. Under the `react-server` export condition, some o
 resolve to server-only builds — `swr` exports no default there, which Sanity's validation
 utilities import as one — and the route fails to compile:
 
-```
+```text
 Export default doesn't exist in target module
   import useSWR from "swr";
 ```

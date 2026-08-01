@@ -4,11 +4,18 @@ import { defineCliConfig } from "sanity/cli";
  * Configuration for the Sanity CLI -- schema extraction, type generation,
  * dataset export and import, and content migrations.
  *
- * Separate from sanity.config.ts because the CLI runs in Node without the
- * Next.js module resolution that sanity.config.ts relies on, so it reads
- * process.env directly. This is the one place outside src/lib/env.ts that
- * does, and it is deliberate: a missing value here fails a developer's
- * command, not a user's request.
+ * This is the one file permitted to read process.env directly -- the single
+ * documented exception to the invariant in AGENTS.md. Two reasons, neither
+ * cosmetic:
+ *
+ *  1. The Sanity CLI loads this file in plain Node, without Next.js module
+ *     resolution or the `@/` path alias that src/lib/env.ts is imported by.
+ *  2. src/lib/env.ts throws on read for any missing variable. That is correct
+ *     for a running application, and wrong here: `sanity migration run` and
+ *     `sanity typegen generate` would fail on an unrelated absent token.
+ *
+ * The failure mode differs accordingly. A missing value here breaks a
+ * developer's command with a CLI error, not a visitor's request.
  */
 export default defineCliConfig({
   api: {

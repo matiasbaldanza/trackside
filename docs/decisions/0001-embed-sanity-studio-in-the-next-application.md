@@ -56,8 +56,10 @@ the coupling described above is a liability rather than a convenience.
 None of those conditions hold here. There is one front end, one release cadence, and a schema
 whose validation rules encode scheduling constraints that the public schedule reads directly.
 Splitting the repository would put a review boundary through the middle of changes that are single
-changes. Embedding remains fully supported — `next-sanity` exists for exactly this — so the
-divergence costs support, not capability.
+changes. Embedding remains fully supported: `next-sanity` documents this exact arrangement
+([Studio embedding guide](https://www.sanity.io/docs/studio/embedding-sanity-studio)), and this
+repository uses `next-sanity` 13.2.3 with `sanity` 6.8.0, whose peer ranges cover Next 16 and
+React 19 — see `package.json`. The divergence costs conformity with a default, not capability.
 
 If any of those conditions later become true, this ADR should be revisited on that basis rather
 than on the strength of the default.
@@ -69,9 +71,18 @@ than on the strength of the default.
 - Generated types flow from schema to frontend with no publishing step.
 - The Studio route sits outside the public site's root layout and is excluded from its caching and
   metadata conventions. This must be handled explicitly rather than assumed.
-- The application bundle includes Studio dependencies. They are confined to the `/studio` route
-  segment, so they do not reach the public schedule's payload, but they do affect install time and
-  build duration.
+- The application bundle includes Studio dependencies. They affect install time and build duration,
+  and they are confined to the `/studio` route segment.
+
+  **Measured on 2026-07-31**, against a production build with an empty schema: the prerendered `/`
+  references 7 client scripts totalling 613 KB uncompressed, **none of which contain Sanity code**.
+  Of 210 client chunks in the build, 166 (6.0 MB) contain Sanity code and none are reachable from
+  `/`. Route-segment isolation therefore holds in practice, not only in principle.
+
+  This measurement is worth repeating once the schedule route exists and imports the query layer,
+  because that is where the boundary could plausibly leak. The 613 KB figure is uncompressed and is
+  Next.js's own baseline, not a budget result; the performance budget is assessed over the wire in
+  Milestone 6.
 - Studio availability is coupled to the public application's availability. For a system whose
   editorial surface is only used while the public surface is also needed, this is acceptable.
 
