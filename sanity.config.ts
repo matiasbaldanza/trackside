@@ -4,6 +4,7 @@ import { structureTool } from "sanity/structure";
 
 import { sanityConfig } from "@/lib/env";
 import { schemaTypes } from "./sanity/schemas";
+import { structure } from "./sanity/structure";
 
 /**
  * Sanity Studio, served by the Next.js application at /studio.
@@ -26,8 +27,21 @@ export default defineConfig({
     types: schemaTypes,
   },
 
+  /**
+   * The event is a singleton. Removing its create and delete actions is what
+   * actually enforces that -- the custom structure only hides the list; it
+   * does not stop a second event being created through search or a direct
+   * URL.
+   */
+  document: {
+    actions: (previous, { schemaType }) =>
+      schemaType === "event"
+        ? previous.filter(({ action }) => action !== "duplicate" && action !== "delete")
+        : previous,
+  },
+
   plugins: [
-    structureTool(),
+    structureTool({ structure }),
     /**
      * Vision runs GROQ queries against the dataset from inside the Studio.
      * Included because queries here encode scheduling rules, and being able

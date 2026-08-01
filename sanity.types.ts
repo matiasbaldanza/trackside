@@ -15,6 +15,162 @@
 export declare const internalGroqTypeReferenceTo: unique symbol;
 
 // Source: schema.json
+export type TrackReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "track";
+};
+
+export type LiveStatus = {
+  _type: "liveStatus";
+  state?: "onTime" | "delayed" | "moved" | "cancelled";
+  delayMinutes?: number;
+  movedToTrack?: TrackReference;
+  note?: string;
+  updatedAt?: string;
+};
+
+export type Link = {
+  _type: "link";
+  label?: string;
+  href?: string;
+};
+
+export type SpeakerReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "speaker";
+};
+
+export type Session = {
+  _id: string;
+  _type: "session";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  title?: string;
+  slug?: Slug;
+  type?: "talk" | "keynote" | "workshop" | "panel" | "break" | "registration";
+  abstract?: string;
+  speakers?: Array<
+    {
+      _key: string;
+    } & SpeakerReference
+  >;
+  language?: "es" | "en";
+  level?: "intro" | "intermediate" | "advanced";
+  track?: TrackReference;
+  startsAt?: string;
+  durationMinutes?: number;
+  capacity?: number;
+  signupUrl?: string;
+  recorded?: boolean;
+  captioned?: boolean;
+  liveStatus?: LiveStatus;
+};
+
+export type Slug = {
+  _type: "slug";
+  current: string;
+  source?: string;
+};
+
+export type SanityImageAssetReference = {
+  _ref: string;
+  _type: "reference";
+  _weak?: boolean;
+  [internalGroqTypeReferenceTo]?: "sanity.imageAsset";
+};
+
+export type Speaker = {
+  _id: string;
+  _type: "speaker";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
+  slug?: Slug;
+  jobTitle?: string;
+  organisation?: string;
+  photo?: {
+    asset?: SanityImageAssetReference;
+    media?: unknown;
+    hotspot?: SanityImageHotspot;
+    crop?: SanityImageCrop;
+    alt?: string;
+    _type: "image";
+  };
+  bio?: Array<{
+    children?: Array<{
+      marks?: Array<string>;
+      text?: string;
+      _type: "span";
+      _key: string;
+    }>;
+    style?: "normal";
+    listItem?: never;
+    markDefs?: Array<{
+      href?: string;
+      _type: "link";
+      _key: string;
+    }>;
+    level?: number;
+    _type: "block";
+    _key: string;
+  }>;
+  links?: Array<
+    {
+      _key: string;
+    } & Link
+  >;
+};
+
+export type SanityImageCrop = {
+  _type: "sanity.imageCrop";
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+};
+
+export type SanityImageHotspot = {
+  _type: "sanity.imageHotspot";
+  x: number;
+  y: number;
+  height: number;
+  width: number;
+};
+
+export type Track = {
+  _id: string;
+  _type: "track";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
+  slug?: Slug;
+  shortName?: string;
+  order?: number;
+  capacity?: number;
+};
+
+export type Event = {
+  _id: string;
+  _type: "event";
+  _createdAt: string;
+  _updatedAt: string;
+  _rev: string;
+  name?: string;
+  tagline?: string;
+  startDate?: string;
+  endDate?: string;
+  timezone?: string;
+  venueName?: string;
+  city?: string;
+};
+
 export type SanityImagePaletteSwatch = {
   _type: "sanity.imagePaletteSwatch";
   background?: string;
@@ -51,22 +207,6 @@ export type SanityImageMetadata = {
   thumbHash?: string;
   hasAlpha?: boolean;
   isOpaque?: boolean;
-};
-
-export type SanityImageHotspot = {
-  _type: "sanity.imageHotspot";
-  x: number;
-  y: number;
-  height: number;
-  width: number;
-};
-
-export type SanityImageCrop = {
-  _type: "sanity.imageCrop";
-  top: number;
-  bottom: number;
-  left: number;
-  right: number;
 };
 
 export type SanityFileAsset = {
@@ -128,21 +268,24 @@ export type Geopoint = {
   alt?: number;
 };
 
-export type Slug = {
-  _type: "slug";
-  current: string;
-  source?: string;
-};
-
 export type AllSanitySchemaTypes =
+  | TrackReference
+  | LiveStatus
+  | Link
+  | SpeakerReference
+  | Session
+  | Slug
+  | SanityImageAssetReference
+  | Speaker
+  | SanityImageCrop
+  | SanityImageHotspot
+  | Track
+  | Event
   | SanityImagePaletteSwatch
   | SanityImagePalette
   | SanityImageDimensions
   | SanityImageMetadata
-  | SanityImageHotspot
-  | SanityImageCrop
   | SanityFileAsset
   | SanityAssetSourceData
   | SanityImageAsset
-  | Geopoint
-  | Slug;
+  | Geopoint;

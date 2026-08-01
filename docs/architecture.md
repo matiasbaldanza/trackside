@@ -72,9 +72,96 @@ developer's command rather than a visitor's request.
 
 ## Content model
 
-_To be written in Milestone 2._ Documents and objects, the relationships between them, and why
-each entity is a document rather than an inline object. How sessions represent time, and why
-conference days are not modelled.
+Four documents and two objects.
+
+```mermaid
+erDiagram
+    EVENT ||--o{ SESSION : "bounds the dates of"
+    TRACK ||--o{ SESSION : "hosts"
+    SESSION }o--o{ SPEAKER : "is presented by"
+    SESSION ||--o| LIVE_STATUS : "embeds"
+    SPEAKER ||--o{ LINK : "embeds"
+    TRACK ||--o{ LIVE_STATUS : "is moved-to by"
+
+    EVENT {
+        string name
+        date startDate
+        date endDate
+        string timezone "IANA, venue"
+    }
+    TRACK {
+        string name
+        slug slug "URL filter"
+        number order "grid column"
+    }
+    SESSION {
+        string title
+        slug slug
+        string type "talk|workshop|break|…"
+        datetime startsAt "UTC instant"
+        number durationMinutes "end is derived"
+    }
+    SPEAKER {
+        string name
+        slug slug
+        image photo
+        blocks bio
+    }
+    LIVE_STATUS {
+        string state "onTime|delayed|moved|cancelled"
+        number delayMinutes
+        string note
+    }
+    LINK {
+        string label
+        url href
+    }
+```
+
+`EVENT`, `TRACK`, `SESSION` and `SPEAKER` are documents. `LIVE_STATUS` and `LINK` are objects,
+drawn here because their fields matter, but they have no independent existence.
+
+**One edge is not a stored reference.** `EVENT → SESSION` is drawn because the relationship is
+real — the event's date range and timezone determine which day a session falls on, and validation
+rejects sessions outside it — but no field holds it. The event is a singleton, so the association
+is implicit rather than persisted. Every other edge in the diagram is a reference you can follow
+in the data.
+
+### Why each is a document or an object
+
+The distinction is not stylistic. A **document** has an identity, a lifecycle, and things that
+refer to it. An **object** is part of whatever contains it and has none of those.
+
+- **Track** is a document because a room is renamed and reordered independently of the thirty
+  sessions in it. Storing the room as a string on each session would make a rename an edit of
+  thirty documents.
+- **Speaker** is a document because one person appears in several sessions and their biography
+  should be written once. Embedding it would duplicate the content and let the copies drift.
+- **Live status** is an object because it has no meaning apart from the session it describes, is
+  never referenced, and is only ever read alongside it. As a document it would add a reference to
+  resolve on the hottest read in the system.
+
+### Relationships
+
+Session→speaker is **many-to-many** and needs no join document: the relationship carries no
+attributes of its own, and the ordered reference array on the session holds everything — including
+credit order, which the array position already expresses. This is where a conference differs from,
+say, a festival, whose performance of an artist in a room at a time is itself an entity.
+
+Session→track is a single required reference. The `movedToTrack` reference inside `liveStatus` is
+the second edge from a session into a track, and it is why a track cannot be deleted casually once
+an event is running.
+
+### Time, and the absence of a Day
+
+Sessions store a UTC instant plus a duration; end times are derived. Conference days are computed
+from the event's date range rather than modelled. Both decisions, with the alternatives that were
+rejected, are in [ADR-0002](./decisions/0002-store-a-start-instant-and-a-duration.md).
+
+One consequence is worth repeating here because it is easy to get wrong: **grouping sessions into
+days requires converting each instant into the venue timezone first.** A session at 23:30 venue
+time falls on a different date in UTC, so a grouping that compares raw timestamps is wrong for
+late sessions — quietly, and only sometimes.
 
 ## Validation
 
