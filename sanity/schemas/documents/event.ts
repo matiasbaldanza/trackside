@@ -55,6 +55,7 @@ export const event = defineType({
       description:
         "IANA timezone identifier, such as America/Argentina/Buenos_Aires. Session times are stored as instants and displayed in this zone by default, so changing it moves the entire published programme.",
       initialValue: "America/Argentina/Buenos_Aires",
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "venueName",

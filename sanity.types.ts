@@ -33,8 +33,8 @@ export type LiveStatus = {
 
 export type Link = {
   _type: "link";
-  label?: string;
-  href?: string;
+  label: string;
+  href: string;
 };
 
 export type SpeakerReference = {
@@ -166,7 +166,7 @@ export type Event = {
   tagline?: string;
   startDate: string;
   endDate?: string;
-  timezone?: string;
+  timezone: string;
   venueName?: string;
   city?: string;
 };

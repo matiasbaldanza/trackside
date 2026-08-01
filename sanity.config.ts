@@ -28,16 +28,22 @@ export default defineConfig({
   },
 
   /**
-   * The event is a singleton. Removing its create and delete actions is what
-   * actually enforces that -- the custom structure only hides the list; it
-   * does not stop a second event being created through search or a direct
-   * URL.
+   * The event is a singleton, and enforcing that takes two separate things.
+   *
+   * Removing duplicate and delete stops the document being copied or removed
+   * once it exists. That alone is not enough: the global create menu would
+   * still offer "Event" and produce a second one with a generated id, which
+   * the custom structure would then never show. Removing it from the new
+   * document options closes that path.
    */
   document: {
     actions: (previous, { schemaType }) =>
       schemaType === "event"
         ? previous.filter(({ action }) => action !== "duplicate" && action !== "delete")
         : previous,
+
+    newDocumentOptions: (previous) =>
+      previous.filter((template) => template.templateId !== "event"),
   },
 
   plugins: [

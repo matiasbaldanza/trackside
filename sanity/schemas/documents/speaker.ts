@@ -47,10 +47,16 @@ export const speaker = defineType({
       options: { hotspot: true },
       description:
         "Cropped to a square in the interface. Set the hotspot so the crop keeps the face centred.",
-      // A warning, never an error: a speaker is often confirmed weeks before
-      // they send a photograph, and the programme has to be publishable in
-      // the meantime. See ADR-0003.
-      validation: (rule) => rule.warning("No portrait yet."),
+      /**
+       * A warning, never an error: a speaker is often confirmed weeks before
+       * they send a photograph, and the programme has to be publishable in
+       * the meantime. See ADR-0003.
+       *
+       * `rule.warning(message)` alone sets the severity of a rule set without
+       * adding a constraint to it, so it always passes. The check has to be
+       * the `custom` callback; `.warning()` only decides how it is reported.
+       */
+      validation: (rule) => rule.custom((value) => (value ? true : "No portrait yet.")).warning(),
       fields: [
         defineField({
           name: "alt",
@@ -67,7 +73,10 @@ export const speaker = defineType({
       type: "array",
       description:
         "A short paragraph or two. Deliberately limited: no headings, no images, no embedded media. A biography is prose, and richer formatting here would make the speaker list inconsistent.",
-      validation: (rule) => rule.warning("No biography yet."),
+      validation: (rule) =>
+        rule
+          .custom((value) => ((value as unknown[] | undefined)?.length ? true : "No biography yet."))
+          .warning(),
       of: [
         defineArrayMember({
           type: "block",

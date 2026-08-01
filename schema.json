@@ -117,14 +117,14 @@
           "value": {
             "type": "string"
           },
-          "optional": true
+          "optional": false
         },
         "href": {
           "type": "objectAttribute",
           "value": {
             "type": "string"
           },
-          "optional": true
+          "optional": false
         }
       }
     }
@@ -942,7 +942,7 @@
         "value": {
           "type": "string"
         },
-        "optional": true
+        "optional": false
       },
       "venueName": {
         "type": "objectAttribute",

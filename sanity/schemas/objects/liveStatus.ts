@@ -18,6 +18,20 @@ import { defineField, defineType } from "sanity";
  * There is no history. An operator records the current state; a full audit
  * trail implies a retention policy and a reader who wants it, and this system
  * has neither.
+ *
+ * ## `state` is the only field that decides meaning
+ *
+ * `hidden` controls visibility, not data. Setting a session to "delayed" with
+ * twenty minutes and then back to "on time" leaves `delayMinutes: 20` in the
+ * document with the field no longer shown. Nothing clears it, and clearing it
+ * automatically would mean an operator who mis-taps loses the number they
+ * just typed.
+ *
+ * So the contract is explicit instead: **`delayMinutes` and `movedToTrack`
+ * are meaningful only when `state` is `delayed` or `moved` respectively.**
+ * Every consumer must read `state` first. The query layer enforces this at
+ * the boundary rather than trusting each call site -- see
+ * `docs/architecture.md`.
  */
 export const liveStatus = defineType({
   name: "liveStatus",
@@ -85,7 +99,11 @@ export const liveStatus = defineType({
       type: "datetime",
       readOnly: true,
       description:
-        "Set automatically when the status is published. Attendees are told how old a status is, because “delayed” with no timestamp is not information.",
+        "When this status was last published. Attendees are told how old a status is, because “delayed” with no timestamp is not information.",
+      // Read-only and, for now, never written: the document action that sets
+      // it alongside publishing arrives with the live operations pane in
+      // Milestone 5. Until then this field stays empty, and anything reading
+      // it must treat that as "unknown", not as "just now".
     }),
   ],
 });

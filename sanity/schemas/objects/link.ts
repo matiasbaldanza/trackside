@@ -15,11 +15,16 @@ export const link = defineType({
       type: "string",
       description:
         "What the link is called. Written out rather than derived from the URL, because “github.com/…” tells a screen-reader user nothing useful.",
+      // Required for the reason the description gives: a link with no label
+      // has no accessible name.
+      validation: (rule) => rule.required(),
     }),
     defineField({
       name: "href",
       title: "URL",
       type: "url",
+      // A link with no destination renders nothing to follow.
+      validation: (rule) => rule.required(),
     }),
   ],
   preview: {
