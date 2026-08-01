@@ -1,7 +1,10 @@
 ## Build scripts must be approved explicitly under pnpm 10+.
-## Both entries below are transitive dependencies of the Next.js toolchain:
+## Each entry is a transitive dependency that compiles or downloads a
+## platform-specific binary during install:
+##   esbuild       - bundler used by the Sanity toolchain
 ##   sharp         - image processing used by Next's image optimizer
 ##   unrs-resolver - module resolution used by eslint-config-next
 allowBuilds:
+  esbuild: true
   sharp: true
   unrs-resolver: true
