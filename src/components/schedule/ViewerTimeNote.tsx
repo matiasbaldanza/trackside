@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-import { formatTime, formatZoneLabel } from "@/lib/schedule/format";
+import { formatOffset, formatTime, formatZoneName } from "@/lib/schedule/format";
 
 /**
  * The same session, in the reader's own timezone.
@@ -48,7 +48,7 @@ export function ViewerTimeNote({
 
   return (
     <span className="block text-xs text-faint">
-      {from} – {to} your time · {formatZoneLabel(startsAt, zone)}
+      {from} – {to} your time · {formatOffset(startsAt, zone)} · {formatZoneName(zone)}
     </span>
   );
 }

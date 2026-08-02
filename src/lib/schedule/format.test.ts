@@ -10,7 +10,7 @@ import {
   formatOffset,
   formatStatus,
   formatTime,
-  formatZoneLabel,
+  formatZoneName,
 } from "./format";
 
 const BA = "America/Argentina/Buenos_Aires";
@@ -79,18 +79,16 @@ describe("formatOffset", () => {
   });
 });
 
-describe("formatZoneLabel", () => {
-  it("names the zone as well as quantifying it", () => {
-    expect(formatZoneLabel("2026-09-24T13:00:00.000Z", BERLIN)).toBe("UTC+2 · Europe/Berlin");
+describe("formatZoneName", () => {
+  it("leaves a zone with no underscores alone", () => {
+    expect(formatZoneName(BERLIN)).toBe("Europe/Berlin");
   });
 
   // The slashes stay, because they are what makes the string recognisable as
   // an IANA identifier. Only the underscores go, and only because they read as
   // a formatting accident rather than as part of a place name.
   it("spells the identifier out rather than showing its underscores", () => {
-    expect(formatZoneLabel("2026-09-24T13:00:00.000Z", BA)).toBe(
-      "UTC−3 · America/Argentina/Buenos Aires",
-    );
+    expect(formatZoneName(BA)).toBe("America/Argentina/Buenos Aires");
   });
 });
 

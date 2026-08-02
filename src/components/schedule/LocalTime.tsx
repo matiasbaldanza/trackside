@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore } from "react";
 
-import { formatTime, formatZoneLabel } from "@/lib/schedule/format";
+import { formatOffset, formatTime, formatZoneName } from "@/lib/schedule/format";
 
 /**
  * A time shown in the reader's own timezone.
@@ -67,20 +67,40 @@ export function LocalTime({
 }
 
 /**
- * The reader's timezone, named, so the times above are not just numbers.
+ * The reader's UTC offset, and their zone's name, as two separate components.
  *
- * Falls back to the venue's label until it knows better, for the same reason
- * as above: what the server can say truthfully is what the server says.
+ * Separate because they behave completely differently in a layout. An offset
+ * is `UTC+2` in almost every zone -- five characters, pixel-identical under
+ * tabular figures -- so it can sit inline beside the control in a slot of
+ * reserved width and never move it. A zone identifier ranges from `UTC` to
+ * `America/Argentina/Buenos_Aires`, and putting *that* inline is what made the
+ * toggle jump 159 pixels when it swapped in after hydration.
+ *
+ * Both fall back to the venue's values until they know better, for the same
+ * reason as `LocalTime`: what the server can say truthfully is what it says.
  */
-export function LocalZoneLabel({ fallback }: { fallback: string }) {
-  const label = useSyncExternalStore(
+export function LocalOffset({ fallback }: { fallback: string }) {
+  const offset = useSyncExternalStore(
     neverChanges,
     () => {
       const zone = viewerTimeZone();
-      return zone ? formatZoneLabel(new Date(), zone) : fallback;
+      return zone ? formatOffset(new Date(), zone) : fallback;
     },
     () => fallback,
   );
 
-  return <span>{label}</span>;
+  return <>{offset}</>;
+}
+
+export function LocalZoneName({ fallback }: { fallback: string }) {
+  const name = useSyncExternalStore(
+    neverChanges,
+    () => {
+      const zone = viewerTimeZone();
+      return zone ? formatZoneName(zone) : fallback;
+    },
+    () => fallback,
+  );
+
+  return <>{name}</>;
 }

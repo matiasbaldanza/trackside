@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { scheduleHref, type ScheduleParams } from "@/lib/schedule/filters";
 
-import { LocalZoneLabel } from "./LocalTime";
+import { LocalOffset, LocalZoneName } from "./LocalTime";
 
 /**
  * Whose clock the schedule is read on.
@@ -21,6 +21,24 @@ import { LocalZoneLabel } from "./LocalTime";
  * The reader's own zone is offered because the other half of the audience is
  * not in the room, and telling them to do the arithmetic themselves is how
  * remote attendees miss the talk they got up for.
+ *
+ * ## Why this is two lines
+ *
+ * The control and the offset sit on one line; the zone's name sits on the
+ * next. That is a layout decision, and it is load-bearing.
+ *
+ * An offset is five characters in almost every zone, and `tabular-nums` makes
+ * `UTC−3` and `UTC+2` the same width to the pixel, so a slot of reserved width
+ * holds it without the control ever moving. A zone identifier is not
+ * predictable at all -- `UTC` to `America/Argentina/Buenos_Aires` -- and while
+ * it sat inline the control jumped 159 pixels: once when the reader toggled,
+ * and again, unprompted, when the client swapped its guess in after
+ * hydration. On its own line, with nothing beside it, its width is nobody's
+ * business.
+ *
+ * A tooltip would also have removed the shift, and was rejected: `title` is
+ * unreachable by keyboard and by touch, and "has it guessed my zone right?" is
+ * precisely the question a reader on a phone needs answered.
  */
 export function TimezoneToggle({
   params,
@@ -40,34 +58,41 @@ export function TimezoneToggle({
   const off = "text-muted hover:text-text";
 
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      <span id="timezone-label" className="text-faint">
-        Times in
-      </span>
-      <div
-        role="group"
-        aria-labelledby="timezone-label"
-        className="inline-flex rounded-full border border-line p-0.5"
-      >
-        <Link
-          href={scheduleHref(params, { tz: null })}
-          aria-current={viewerLocal ? undefined : "true"}
-          title={venueName}
-          className={`${base} ${viewerLocal ? off : on}`}
+    <div className="flex flex-col gap-1 lg:items-end">
+      <div className="flex items-center gap-2 text-sm">
+        <span id="timezone-label" className="text-faint">
+          Times in
+        </span>
+        <div
+          role="group"
+          aria-labelledby="timezone-label"
+          className="inline-flex rounded-full border border-line p-0.5"
         >
-          Venue time
-        </Link>
-        <Link
-          href={scheduleHref(params, { tz: "local" })}
-          aria-current={viewerLocal ? "true" : undefined}
-          className={`${base} ${viewerLocal ? on : off}`}
-        >
-          My time
-        </Link>
+          <Link
+            href={scheduleHref(params, { tz: null })}
+            aria-current={viewerLocal ? undefined : "true"}
+            className={`${base} ${viewerLocal ? off : on}`}
+          >
+            Venue time
+          </Link>
+          <Link
+            href={scheduleHref(params, { tz: "local" })}
+            aria-current={viewerLocal ? "true" : undefined}
+            className={`${base} ${viewerLocal ? on : off}`}
+          >
+            My time
+          </Link>
+        </div>
+        {/* Reserved width, tabular figures. Wide enough for the longest real
+            offset (`UTC−09:30`), so nothing to its left can be moved by what
+            lands in it -- neither a toggle nor a hydration swap. */}
+        <span className="tabular inline-block w-[4.75rem] shrink-0 text-faint">
+          {viewerLocal ? <LocalOffset fallback={venueOffset} /> : venueOffset}
+        </span>
       </div>
-      <span className="text-faint">
-        {viewerLocal ? <LocalZoneLabel fallback={venueOffset} /> : venueOffset}
-      </span>
+      <p className="text-xs text-faint">
+        {viewerLocal ? <LocalZoneName fallback={venueName} /> : venueName}
+      </p>
     </div>
   );
 }

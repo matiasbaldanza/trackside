@@ -84,18 +84,22 @@ export function formatOffset(instant: string | Date, timeZone: string): string {
 }
 
 /**
- * A timezone named and quantified: `UTC+2 · Europe Berlin`.
+ * An IANA identifier as something to read: `America/Argentina/Buenos Aires`.
  *
- * Used for the reader's own zone, where the offset alone is not enough --
- * "UTC+2" is a fact about arithmetic, and the identifier is what lets someone
- * recognise whether the page has guessed their location correctly.
+ * Shown next to the offset because "UTC+2" is a fact about arithmetic, and the
+ * identifier is what lets someone recognise whether the page has guessed their
+ * location correctly.
  *
- * Pure, and takes the zone as an argument, so that the client component that
- * discovers the reader's zone contains no formatting logic of its own and this
+ * The slashes stay -- they are what makes the string recognisable as a zone
+ * identifier rather than a place name. Only the underscores go, because they
+ * read as a formatting accident.
+ *
+ * Pure, and takes the zone as an argument, so the client component that
+ * discovers the reader's zone holds no formatting logic of its own and this
  * can be tested without a browser.
  */
-export function formatZoneLabel(instant: string | Date, timeZone: string): string {
-  return `${formatOffset(instant, timeZone)} · ${timeZone.replace(/_/g, " ")}`;
+export function formatZoneName(timeZone: string): string {
+  return timeZone.replace(/_/g, " ");
 }
 
 const TYPE_LABELS: Record<SessionType, string> = {
