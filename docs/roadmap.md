@@ -128,6 +128,13 @@ timezone is the venue's. The formatting it depends on is tested against two zone
 of a DST boundary; the hydration contract is React's. A pass on a real handset is still
 outstanding.
 
+**On the visual treatment.** It is deliberately plain, and that is a sequencing decision rather
+than the intended result. Choosing a component library and an art direction are decisions with
+their own trade-offs, and taking them at the same time as the layout, the timezone handling and
+the caching boundary would have meant arguing four things at once and getting none of them
+cleanly. So this milestone establishes the structure under a neutral skin; the visual identity is
+a separate pass over surfaces that are already settled.
+
 **Documentation:** `docs/architecture.md` — data access, rendering boundaries, timezones.
 ADR-0005 and ADR-0006.
 
