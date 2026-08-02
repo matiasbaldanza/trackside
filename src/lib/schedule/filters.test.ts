@@ -102,22 +102,31 @@ describe("resolveSelection", () => {
 
   it("takes the first value when a parameter is repeated in the URL", () => {
     const selection = resolveSelection(
-      { day: ["2026-09-25", "2026-09-24"], room: ["laboratorio"] },
+      { day: ["2026-09-25", "2026-09-24"], room: ["laboratorio"], tz: ["local", "venue"] },
       DAYS,
       ROOMS,
       BA,
     );
-    expect(selection).toEqual({ day: "2026-09-25", room: "laboratorio" });
+    expect(selection).toEqual({ day: "2026-09-25", room: "laboratorio", viewerLocal: true });
+  });
+
+  // Resolved here rather than at the call site, because `params.tz === "local"`
+  // reads as correct and quietly answers "no" for a repeated parameter.
+  it("resolves the timezone preference alongside everything else", () => {
+    expect(resolveSelection({ tz: "local" }, DAYS, ROOMS, BA).viewerLocal).toBe(true);
+    expect(resolveSelection({}, DAYS, ROOMS, BA).viewerLocal).toBe(false);
+    expect(resolveSelection({ tz: "venue" }, DAYS, ROOMS, BA).viewerLocal).toBe(false);
+    expect(resolveSelection({ tz: ["local"] }, DAYS, ROOMS, BA).viewerLocal).toBe(true);
   });
 });
 
 describe("visibleRooms", () => {
   it("draws every column when no room is selected", () => {
-    expect(visibleRooms(ROOMS, { day: "2026-09-24", room: null })).toHaveLength(2);
+    expect(visibleRooms(ROOMS, { day: "2026-09-24", room: null, viewerLocal: false })).toHaveLength(2);
   });
 
   it("draws one column when a room is selected", () => {
-    expect(visibleRooms(ROOMS, { day: "2026-09-24", room: "laboratorio" })).toEqual([LAB]);
+    expect(visibleRooms(ROOMS, { day: "2026-09-24", room: "laboratorio", viewerLocal: false })).toEqual([LAB]);
   });
 });
 
@@ -132,16 +141,16 @@ describe("filterDay", () => {
   };
 
   it("returns the day untouched when no room is selected", () => {
-    expect(filterDay(day, { day: day.date, room: null })).toBe(day);
+    expect(filterDay(day, { day: day.date, room: null, viewerLocal: false })).toBe(day);
   });
 
   it("keeps only the selected room", () => {
-    const filtered = filterDay(day, { day: day.date, room: "auditorio" });
+    const filtered = filterDay(day, { day: day.date, room: "auditorio", viewerLocal: false });
     expect(filtered.sessions.map((s) => s.id)).toEqual(["a"]);
   });
 
   it("follows a moved session into the room it is now in", () => {
-    const filtered = filterDay(day, { day: day.date, room: "laboratorio" });
+    const filtered = filterDay(day, { day: day.date, room: "laboratorio", viewerLocal: false });
     expect(filtered.sessions.map((s) => s.id)).toEqual(["b", "moved"]);
   });
 });

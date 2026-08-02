@@ -20,6 +20,16 @@ making intervals closed (so back-to-back sessions become conflicts) and dropping
 adjustment in the event-bounds check (so a session ending at midnight falls outside the
 conference). Each was caught by exactly one test, naming the behaviour that broke.
 
+### Unit — the fixture programme ✅
+`fixtures/nodo-conf.test.ts` — 22 tests running the seeded programme through the same pure
+functions the Studio's validation uses. Unique ids, **no dots in any id**, every `startsAt`
+normalised to `Z`, no room double-booked, everything inside the conference dates, workshops with
+capacity and a sign-up URL, no speakers on intervals, referential integrity, both days spanned.
+
+Two of those exist because of incidents rather than foresight: a document id containing a dot is
+private regardless of dataset visibility, and Sanity stores datetimes exactly as written. Both
+shipped, both were silent, and both are now assertions.
+
 ### Unit — query result transformation ✅
 `src/lib/sanity/programme.test.ts` — 30 tests over the boundary between Sanity's documents and the
 model the interface renders.
@@ -36,12 +46,12 @@ session type, a state the interface has no design for, a room reference that no 
 The Content Lake is schemaless, so those are reachable states rather than defensive padding.
 
 ### Unit — grid placement, filtering and formatting ✅
-`src/lib/schedule/layout.test.ts` — 15 tests. The axis derived from the day's content, spans
+`src/lib/schedule/layout.test.ts` — 16 tests. The axis derived from the day's content, spans
 proportional to duration, a moved session's column, a delayed session's row, clamping a session
-that runs past midnight, and correct row alignment in a timezone whose offset is not a whole
-number of hours.
+that runs past midnight, refusing to place a session whose room has no column, and correct row
+alignment in a timezone whose offset is not a whole number of hours.
 
-`src/lib/schedule/filters.test.ts` — 15 tests. Which day opens by default, including the case
+`src/lib/schedule/filters.test.ts` — 16 tests. Which day opens by default, including the case
 where it is already tomorrow in Europe and still today in Buenos Aires; unknown values falling
 back rather than producing an empty page; and URLs keeping the parameters they were not asked to
 change.
@@ -118,7 +128,7 @@ Only checks that actually ran appear here.
 
 | Check | Result |
 | --- | --- |
-| `pnpm test` | 144 passed |
+| `pnpm test` | 146 passed |
 | `pnpm typecheck`, `pnpm lint` | Clean |
 | `pnpm build` | Compiled; `/` dynamic, 26 session pages prerendered |
 | Programme query over the public API, unauthenticated | 1 event, 4 rooms, 26 sessions |

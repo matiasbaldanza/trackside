@@ -19,8 +19,17 @@ import { scheduleHref, type ScheduleParams, type Selection } from "@/lib/schedul
  * that actually needs conveying.
  */
 
+/**
+ * `inline-flex`, not the anchor's default `inline`.
+ *
+ * Vertical padding on an inline box does not contribute to layout height -- it
+ * paints outside the line box without expanding it. Inside the horizontally
+ * scrolling container below that produced twelve pixels of phantom vertical
+ * overflow and, because `overflow-x: auto` forces a `visible` `overflow-y` to
+ * compute to `auto`, a vertical scrollbar on every filter row.
+ */
 const BASE =
-  "rounded-full border px-3 py-1.5 text-sm whitespace-nowrap transition-colors";
+  "inline-flex items-center rounded-full border px-3 py-1.5 text-sm whitespace-nowrap transition-colors";
 const SELECTED = "border-accent bg-accent text-accent-ink font-medium";
 const UNSELECTED = "border-line text-muted hover:border-line-strong hover:text-text";
 
@@ -58,8 +67,11 @@ export function ScheduleFilters({
   return (
     <div className="flex flex-col gap-3">
       {days.length > 1 ? (
-        <nav aria-label="Conference days" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <ul className="flex gap-2">
+        <nav
+          aria-label="Conference days"
+          className="-mx-4 -my-1 overflow-x-auto px-4 py-1 sm:-mx-1 sm:px-1"
+        >
+          <ul className="flex items-center gap-2">
             {days.map((day) => (
               <li key={day.date}>
                 <Choice
@@ -75,8 +87,8 @@ export function ScheduleFilters({
       ) : null}
 
       {rooms.length > 1 ? (
-        <nav aria-label="Rooms" className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
-          <ul className="flex gap-2">
+        <nav aria-label="Rooms" className="-mx-4 -my-1 overflow-x-auto px-4 py-1 sm:-mx-1 sm:px-1">
+          <ul className="flex items-center gap-2">
             <li>
               <Choice href={scheduleHref(params, { room: null })} selected={selection.room === null}>
                 All rooms

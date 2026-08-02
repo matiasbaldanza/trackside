@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import type {
   ProgrammeQueryResult,
   SessionQueryResult,
@@ -5,9 +7,11 @@ import type {
 } from "../../../sanity.types";
 import { CACHE_TAGS, REVALIDATE, sanityFetch } from "./fetch";
 import {
+  toEvent,
   toProgramme,
   toRooms,
   toSessionDetail,
+  type EventInfo,
   type Programme,
   type SessionDetail,
 } from "./programme";
@@ -25,6 +29,12 @@ import { programmeQuery, sessionQuery, sessionSlugsQuery } from "./queries";
  * `ProgrammeQueryResult` to a mapping function that declares its own input
  * shape is what makes `pnpm schema:check` meaningful: remove a field from the
  * schema, and this line stops compiling.
+ *
+ * Every loader is wrapped in React's `cache`, which deduplicates calls within a
+ * single render pass. Routes need this because `generateMetadata` and the
+ * component itself legitimately ask for the same content, and neither should
+ * have to know the other did. It is a per-request memo, not a cache in the
+ * sense `fetch.ts` means -- it does not survive the response.
  */
 
 export type {
@@ -49,22 +59,32 @@ export { MissingContentError } from "./programme";
  * Splitting them into two requests would mean two round trips to render one
  * page, and the shorter interval already bounds the staleness of the whole.
  */
-export async function getProgramme(): Promise<Programme> {
+export const getProgramme = cache(async (): Promise<Programme> => {
   const raw = await sanityFetch<ProgrammeQueryResult>({
     query: programmeQuery,
     tags: [CACHE_TAGS.programme, CACHE_TAGS.status],
     revalidate: REVALIDATE.schedule,
   });
   return toProgramme(raw);
-}
+});
 
 export interface SessionPage {
   session: SessionDetail;
   rooms: ReturnType<typeof toRooms>;
+  /**
+   * The event, for the venue timezone a session cannot be described without.
+   *
+   * Returned here rather than left to the caller because `sessionQuery` already
+   * fetches it. An earlier version discarded it and the route called
+   * `getProgramme()` for the timezone alone -- a second round trip returning
+   * every session in the conference to read one string, and two reads that
+   * could in principle come from different points in the cache.
+   */
+  event: EventInfo;
 }
 
 /** One session by slug, or `null` if no published session has that slug. */
-export async function getSession(slug: string): Promise<SessionPage | null> {
+export const getSession = cache(async (slug: string): Promise<SessionPage | null> => {
   const raw = await sanityFetch<SessionQueryResult>({
     query: sessionQuery,
     params: { slug },
@@ -74,8 +94,8 @@ export async function getSession(slug: string): Promise<SessionPage | null> {
 
   const rooms = toRooms(raw.rooms);
   const session = toSessionDetail(raw.session, rooms);
-  return session ? { session, rooms } : null;
-}
+  return session ? { session, rooms, event: toEvent(raw.event) } : null;
+});
 
 /**
  * Every published session slug, for `generateStaticParams`.
@@ -83,11 +103,11 @@ export async function getSession(slug: string): Promise<SessionPage | null> {
  * Uses the long interval: a slug appearing or disappearing changes which pages
  * exist, which is a programme-structure change, not a live one.
  */
-export async function getSessionSlugs(): Promise<string[]> {
+export const getSessionSlugs = cache(async (): Promise<string[]> => {
   const slugs = await sanityFetch<SessionSlugsQueryResult | null>({
     query: sessionSlugsQuery,
     tags: [CACHE_TAGS.programme],
     revalidate: REVALIDATE.programme,
   });
   return slugs ?? [];
-}
+});

@@ -267,17 +267,39 @@ Both are unit-tested, which is only possible because the layer is pure.
 
 ### Caching policy
 
-Expressed once, in `fetch.ts`, as two tags named after what changes rather than what is displayed:
+Expressed once, in `fetch.ts`. Two things are being decided, and they are not the same thing —
+**tags decide what an invalidation reaches; intervals belong to a read.**
 
-| Tag | Covers | Interval |
+The tags are named after what changes rather than after what is displayed:
+
+| Tag | Covers |
+| --- | --- |
+| `programme` | Which sessions exist, when they were planned, who speaks, the rooms |
+| `status` | Live status only, the volatile half |
+
+The intervals are per read, because a request carries one:
+
+| Read | Tags | Interval |
 | --- | --- | --- |
-| `programme` | Which sessions exist, when they were planned, who speaks, the rooms | 1 hour |
-| `status` | Live status only | 1 minute |
+| `getProgramme` | `programme`, `status` | 1 minute |
+| `getSession` | `programme`, `status` | 1 minute |
+| `getSessionSlugs` | `programme` | 1 hour |
+
+The first two fetch structure and status together, in one round trip, so they take the shorter of
+the two lifetimes — a response is only as fresh as its most volatile part. `getSessionSlugs`
+answers which pages exist, which is a structural question and nothing to do with the event
+running, so it takes the hour.
+
+Splitting the schedule into two requests to give each half its own interval would mean two round
+trips to render one page, and the shorter interval already bounds the staleness of the whole.
+That is the trade, and it is the reason the volatility split shows up in the *tags* rather than in
+the intervals: when the webhook lands in Milestone 5, a biography edit will invalidate `programme`
+without touching a page that only needed `status`, which is where the separation actually pays.
 
 The argument in one sentence: a speaker's biography and a session's live status appear on the same
 page and cannot share a lifetime. The intervals are a floor under correctness, not the freshness
-mechanism — tag invalidation from a webhook is (Milestone 5), and these bound how long a *missed*
-invalidation can go unnoticed.
+mechanism — tag invalidation is — and they bound how long a *missed* invalidation can go
+unnoticed.
 
 `client.ts` sets `useCdn: false`, which is the counterintuitive part. Sanity's CDN and Next's Data
 Cache are both caches, and stacking them means an invalidation reaches only the outer one: Next

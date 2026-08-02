@@ -25,6 +25,8 @@ export interface Selection {
   day: string;
   /** A room slug, or `null` for every room. */
   room: string | null;
+  /** Whether times should be shown in the reader's own timezone. */
+  viewerLocal: boolean;
 }
 
 export interface ScheduleParams {
@@ -68,7 +70,13 @@ export function resolveSelection(
   const requestedRoom = first(params.room);
   const room = rooms.find((candidate) => candidate.slug === requestedRoom)?.slug ?? null;
 
-  return { day, room };
+  // Every parameter is normalised in one place. Reading `params.tz` directly at
+  // a call site looks harmless and is not: a repeated parameter arrives as an
+  // array, so `params.tz === "local"` silently answers "no" for ?tz=local&tz=x
+  // while `scheduleHref` keeps writing the same URL back out.
+  const viewerLocal = first(params.tz) === "local";
+
+  return { day, room, viewerLocal };
 }
 
 /** The rooms whose columns should be drawn. */

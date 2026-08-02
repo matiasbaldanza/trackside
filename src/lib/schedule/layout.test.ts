@@ -170,6 +170,15 @@ describe("layOutDay", () => {
     expect(layout.placements.get("b")?.row).toBe(90 / ROW_MINUTES + 1);
   });
 
+  it("does not place a session whose room has no column", () => {
+    // Filtering to one room narrows both the sessions and the columns, so this
+    // should not arise -- but placing it in column 2 anyway would draw it on
+    // top of the session that belongs there, beneath a header naming a
+    // different room. Absent from the grid is the safe failure.
+    const layout = layOutDay([session({ id: "a", roomId: NORTE.id })], [AUDITORIO], BA);
+    expect(layout.placements.has("a")).toBe(false);
+  });
+
   it("returns a usable grid for a day with no sessions", () => {
     const layout = layOutDay([], ROOMS, BA);
     expect(layout.rowCount).toBeGreaterThan(0);

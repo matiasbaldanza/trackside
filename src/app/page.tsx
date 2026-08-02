@@ -42,7 +42,6 @@ export default async function SchedulePage({
   const day = days.find((candidate) => candidate.date === selection.day) ?? days[0];
   const where = [event.venueName, event.city].filter(Boolean).join(", ");
   const offset = formatOffset(`${selection.day}T12:00:00Z`, event.timezone);
-  const viewerLocal = params.tz === "local";
 
   return (
     <main className="mx-auto max-w-[110rem] px-4 py-8 sm:px-6 lg:px-8">
@@ -56,7 +55,7 @@ export default async function SchedulePage({
           params={params}
           venueOffset={offset}
           venueName={event.timezone.replace(/_/g, " ")}
-          viewerLocal={viewerLocal}
+          viewerLocal={selection.viewerLocal}
         />
       </header>
 
@@ -70,7 +69,7 @@ export default async function SchedulePage({
             day={filterDay(day, selection)}
             rooms={visibleRooms(rooms, selection)}
             timeZone={event.timezone}
-            viewerLocal={viewerLocal}
+            viewerLocal={selection.viewerLocal}
             headingId={`day-${day.date}`}
             emptyMessage={
               selection.room

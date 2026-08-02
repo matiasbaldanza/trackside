@@ -5,18 +5,19 @@ import { Suspense } from "react";
 import { BackLink, BackToProgramme } from "@/components/schedule/BackToProgramme";
 import { StatusBadge } from "@/components/schedule/StatusBadge";
 import { ViewerTimeNote } from "@/components/schedule/ViewerTimeNote";
-import { getProgramme, getSession, getSessionSlugs } from "@/lib/sanity";
+import { getSession, getSessionSlugs } from "@/lib/sanity";
 import {
   changedFromInstant,
   changedFromRoom,
   formatDayHeading,
   formatLanguage,
   formatLevel,
+  formatDuration,
   formatOffset,
   formatTime,
   formatType,
+  venueDate,
 } from "@/lib/schedule/format";
-import { formatDuration, venueDate } from "../../../../sanity/lib/scheduling";
 
 /**
  * One session, in full.
@@ -75,8 +76,7 @@ export default async function SessionPage({ params }: { params: Promise<{ slug: 
   const page = await getSession(slug);
   if (!page) notFound();
 
-  const { session } = page;
-  const { event } = await getProgramme();
+  const { session, event } = page;
   const day = venueDate(session.startsAt, event.timezone);
   const wasAt = changedFromInstant(session);
   const wasIn = changedFromRoom(session);

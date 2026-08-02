@@ -115,12 +115,20 @@ export function layOutDay(
 
   const placements = new Map<string, Placement>();
   for (const { session, start, end } of spans) {
+    // A session whose room has no column gets no placement at all. Defaulting
+    // to the first column would draw it on top of whatever belongs there,
+    // under a header naming a different room -- wrong, and wrong invisibly.
+    // `DaySchedule` renders an unplaced card in normal flow, so being absent
+    // from the grid is a state the interface already handles.
+    const column = columnByRoom.get(session.room.id);
+    if (column === undefined) continue;
+
     const row = Math.round((start - fromMinute) / ROW_MINUTES) + 1;
     const lastRow = Math.min(Math.round((end - fromMinute) / ROW_MINUTES) + 1, rowCount + 1);
     placements.set(session.id, {
       row,
       span: Math.max(1, lastRow - row),
-      column: columnByRoom.get(session.room.id) ?? 2,
+      column,
     });
   }
 

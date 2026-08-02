@@ -1,4 +1,22 @@
 import type { LiveState, ScheduledSession, SessionType } from "@/lib/sanity";
+import { formatDuration, venueDate } from "../../../sanity/lib/scheduling";
+
+/**
+ * Two pure helpers the interface needs, re-exported from the module the Studio
+ * also uses, so there is still exactly one implementation of each.
+ *
+ * They pass through here rather than through `@/lib/sanity` on purpose. That
+ * boundary is about *content access* -- documents, queries, caching -- and
+ * `venueDate` and `formatDuration` are arithmetic that knows nothing about a
+ * CMS. Routing them through it would imply they are a Sanity concern and would
+ * make the boundary mean two things, which is precisely what ADR-0006 exists
+ * to prevent.
+ *
+ * What this does buy is that the relative traversal out of `src/` lives in two
+ * modules at the edge rather than in every route that needs to format a
+ * duration.
+ */
+export { formatDuration, venueDate };
 
 /**
  * How times, dates and statuses read on the page.
