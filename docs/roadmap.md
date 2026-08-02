@@ -103,7 +103,7 @@ tests over the fixture data.
 
 ---
 
-## Milestone 4 — The public schedule ⬜
+## Milestone 4 — The public schedule ✅
 
 **Outcome:** The attendee-facing product works end to end.
 
@@ -111,23 +111,45 @@ tests over the fixture data.
 what time is that for me?"
 
 **Technical tasks**
-- Typed query layer and the single fetching helper that expresses caching policy.
-- Desktop timetable: a time axis with one column per room.
-- Mobile: a chronological agenda, a different layout rather than a compressed grid.
-- Day and room filtering through `searchParams`, driven by links.
-- Timezone handling: venue time rendered on the server, viewer-local offered as a toggle.
-- Session detail route.
-- Loading, empty, and error states.
+- [x] Typed query layer and the single fetching helper that expresses caching policy.
+- [x] Desktop timetable: a time axis with one column per room.
+- [x] Mobile: a chronological agenda, a different layout rather than a compressed grid.
+- [x] Day and room filtering through `searchParams`, driven by links.
+- [x] Timezone handling: venue time rendered on the server, viewer-local offered as a toggle.
+- [x] Session detail route.
+- [x] Loading, empty, and error states.
 
-**Validation:** Unit tests over query result transformation. Manual pass on a real handset.
+**Validation:** 75 unit tests over the query transformation, grid placement, filter resolution and
+formatting. Both layouts, both days, room filtering, the detail route and the not-found page
+checked in a browser against the seeded programme at 1440px and 375px.
 
-**Documentation:** `docs/architecture.md` — routes, component boundaries, the timezone approach.
+**Not verified:** the local-time swap was not observed in a browser, because this machine's
+timezone is the venue's. The formatting it depends on is tested against two zones and both sides
+of a DST boundary; the hydration contract is React's. A pass on a real handset is still
+outstanding.
 
-**Exit criteria:** The schedule is correct, shareable by URL, and usable on a phone.
+**Documentation:** `docs/architecture.md` — data access, rendering boundaries, timezones.
+ADR-0005 and ADR-0006.
 
-**Commit boundaries:** `feat(sanity): add typed query layer` · `feat(schedule): render the
-timetable` · `feat(schedule): add the mobile agenda` · `feat(schedule): filter by day and room` ·
-`feat(schedule): offer viewer-local times` · `feat: add session detail route`
+**Exit criteria:** ✅ The schedule is correct, shareable by URL, and usable on a phone.
+
+**What was learned:** the mobile agenda did not need a separate commit or a separate component
+tree. Ordering the document chronologically and placing items on a grid with `grid-row` and
+`grid-column` produces both layouts from one list — and produces a *better* reading order than the
+per-track lists originally planned, because the chronological order is the one an attendee thinks
+in. That changed the plan mid-milestone and is recorded in ADR-0005.
+
+Reading `searchParams` in the session route to carry the timezone preference silently cost static
+rendering of all 26 pages. Showing venue time and the reader's time together — which a detail page
+has room for and a grid does not — was both simpler and better.
+
+**Commit boundaries:** `feat(sanity): add the typed query layer` · `feat(schedule): render the
+timetable` · `feat(schedule): filter by day and room` · `feat(schedule): offer viewer-local times,
+and mark the current moment` · `feat: add the session detail route, and the loading and error
+states`
+
+*Planned as six commits; the mobile agenda is not among them because it turned out not to be
+separate work. See ADR-0005.*
 
 ---
 
