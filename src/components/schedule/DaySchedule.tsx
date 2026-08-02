@@ -29,11 +29,13 @@ export function DaySchedule({
   rooms,
   timeZone,
   headingId,
+  emptyMessage = "Nothing scheduled for this day yet.",
 }: {
   day: Day;
   rooms: readonly Room[];
   timeZone: string;
   headingId?: string;
+  emptyMessage?: string;
 }) {
   const layout = layOutDay(day.sessions, rooms, timeZone);
   const gridTemplateColumns = `3.75rem repeat(${rooms.length}, minmax(0, 1fr))`;
@@ -46,7 +48,7 @@ export function DaySchedule({
           {formatDayHeading(day.date)}
         </h2>
         <p className="mt-3 rounded-md border border-dashed border-line px-4 py-8 text-center text-sm text-muted">
-          Nothing scheduled for this day yet.
+          {emptyMessage}
         </p>
       </section>
     );

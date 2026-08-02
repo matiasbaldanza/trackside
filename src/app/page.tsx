@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 
 import { DaySchedule } from "@/components/schedule/DaySchedule";
+import { ScheduleFilters } from "@/components/schedule/ScheduleFilters";
 import { getProgramme } from "@/lib/sanity";
+import { filterDay, resolveSelection, visibleRooms, type ScheduleParams } from "@/lib/schedule/filters";
 import { formatOffset } from "@/lib/schedule/format";
 
 /**
@@ -10,6 +12,12 @@ import { formatOffset } from "@/lib/schedule/format";
  * There is no landing page in front of it. Everyone arriving here wants the
  * same thing -- what is on, where, and when -- and a page that delays that to
  * introduce the conference would be a page the audience has to get past.
+ *
+ * One day is rendered at a time. A two-day programme of twenty-six sessions
+ * would fit on one page, but the grid's whole purpose is comparison across
+ * rooms at a moment, and stacking days pushes the second one below a screen of
+ * grid where nobody compares anything. The day is in the URL, so a link to
+ * Friday is a link to Friday.
  */
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,10 +29,18 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function SchedulePage() {
+export default async function SchedulePage({
+  searchParams,
+}: {
+  searchParams: Promise<ScheduleParams>;
+}) {
+  const params = await searchParams;
   const { event, rooms, days } = await getProgramme();
+
+  const selection = resolveSelection(params, days, rooms, event.timezone);
+  const day = days.find((candidate) => candidate.date === selection.day) ?? days[0];
   const where = [event.venueName, event.city].filter(Boolean).join(", ");
-  const offset = formatOffset(days[0] ? `${days[0].date}T12:00:00Z` : new Date(), event.timezone);
+  const offset = formatOffset(`${selection.day}T12:00:00Z`, event.timezone);
 
   return (
     <main className="mx-auto max-w-[110rem] px-4 py-8 sm:px-6 lg:px-8">
@@ -37,16 +53,28 @@ export default async function SchedulePage() {
         </p>
       </header>
 
-      <div className="mt-8 flex flex-col gap-12">
-        {days.map((day) => (
+      <div className="mt-6">
+        <ScheduleFilters days={days} rooms={rooms} selection={selection} params={params} />
+      </div>
+
+      <div className="mt-8">
+        {day ? (
           <DaySchedule
-            key={day.date}
-            day={day}
-            rooms={rooms}
+            day={filterDay(day, selection)}
+            rooms={visibleRooms(rooms, selection)}
             timeZone={event.timezone}
             headingId={`day-${day.date}`}
+            emptyMessage={
+              selection.room
+                ? "Nothing in this room on this day. Try another room, or show them all."
+                : "Nothing scheduled for this day yet."
+            }
           />
-        ))}
+        ) : (
+          <p className="rounded-md border border-dashed border-line px-4 py-12 text-center text-sm text-muted">
+            The programme has not been announced yet.
+          </p>
+        )}
       </div>
     </main>
   );
