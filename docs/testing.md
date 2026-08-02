@@ -56,7 +56,7 @@ where it is already tomorrow in Europe and still today in Buenos Aires; unknown 
 back rather than producing an empty page; and URLs keeping the parameters they were not asked to
 change.
 
-`src/lib/schedule/format.test.ts` — 15 tests. One instant in two zones, offsets on both sides of a
+`src/lib/schedule/format.test.ts` — 16 tests. One instant in two zones, offsets on both sides of a
 DST boundary, and what a status change says about the programme a reader is holding.
 
 ### End to end
@@ -128,7 +128,7 @@ Only checks that actually ran appear here.
 
 | Check | Result |
 | --- | --- |
-| `pnpm test` | 146 passed |
+| `pnpm test` | 147 passed |
 | `pnpm typecheck`, `pnpm lint` | Clean |
 | `pnpm build` | Compiled; `/` dynamic, 26 session pages prerendered |
 | Programme query over the public API, unauthenticated | 1 event, 4 rooms, 26 sessions |

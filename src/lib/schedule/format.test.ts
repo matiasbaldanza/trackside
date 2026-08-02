@@ -77,6 +77,17 @@ describe("formatOffset", () => {
     expect(formatOffset("2026-09-24T13:00:00.000Z", BERLIN)).toBe("UTC+2");
     expect(formatOffset("2026-01-15T13:00:00.000Z", BERLIN)).toBe("UTC+1");
   });
+
+  // Which is why the timezone control quotes both halves of its label at the
+  // *displayed day*, never at `new Date()`. Santiago shifts the opposite way
+  // from Berlin, so a reader there browsing in July would otherwise see UTC−4
+  // printed beside September times that are actually UTC−3 -- a label
+  // contradicting the schedule underneath it, for part of the year only.
+  it("shifts the other way in the southern hemisphere", () => {
+    const SANTIAGO = "America/Santiago";
+    expect(formatOffset("2026-09-24T13:00:00.000Z", SANTIAGO)).toBe("UTC−3");
+    expect(formatOffset("2026-07-15T13:00:00.000Z", SANTIAGO)).toBe("UTC−4");
+  });
 });
 
 describe("formatZoneName", () => {

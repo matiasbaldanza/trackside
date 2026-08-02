@@ -47,14 +47,26 @@ import { LocalOffset, LocalZoneName } from "./LocalTime";
  */
 export function TimezoneToggle({
   params,
+  referenceInstant,
   venueOffset,
   venueName,
   viewerLocal,
 }: {
   params: ScheduleParams;
-  /** Formatted as `UTC−3`. */
+  /**
+   * The instant both offsets are quoted at -- the day being displayed, not now.
+   *
+   * An offset is a property of a zone *at a moment*, so the two halves of this
+   * label have to be quoted at the same one. The venue's is already computed
+   * against the selected day; computing the reader's against `new Date()`
+   * would mean a reader in Santiago browsing in July sees UTC−4 printed beside
+   * September times that are actually UTC−3. The label would contradict the
+   * schedule underneath it, and only for part of the year.
+   */
+  referenceInstant: string;
+  /** Formatted as `UTC−3`, at `referenceInstant`. */
   venueOffset: string;
-  /** The venue's timezone identifier, for the title attribute. */
+  /** The venue's timezone identifier. */
   venueName: string;
   viewerLocal: boolean;
 }) {
@@ -92,7 +104,7 @@ export function TimezoneToggle({
       <p className="tabular text-xs text-faint">
         {viewerLocal ? (
           <>
-            <LocalOffset fallback={venueOffset} /> · <LocalZoneName fallback={venueName} />
+            <LocalOffset instant={referenceInstant} fallback={venueOffset} /> · <LocalZoneName fallback={venueName} />
           </>
         ) : (
           `${venueOffset} · ${venueName}`

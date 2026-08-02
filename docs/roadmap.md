@@ -119,7 +119,7 @@ what time is that for me?"
 - [x] Session detail route.
 - [x] Loading, empty, and error states.
 
-**Validation:** 77 unit tests over the query transformation, grid placement, filter resolution and
+**Validation:** 78 unit tests over the query transformation, grid placement, filter resolution and
 formatting. Both layouts, both days, room filtering, the detail route and the not-found page
 checked in a browser against the seeded programme at 1440px and 375px.
 

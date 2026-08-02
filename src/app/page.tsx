@@ -41,7 +41,11 @@ export default async function SchedulePage({
   const selection = resolveSelection(params, days, rooms, event.timezone);
   const day = days.find((candidate) => candidate.date === selection.day) ?? days[0];
   const where = [event.venueName, event.city].filter(Boolean).join(", ");
-  const offset = formatOffset(`${selection.day}T12:00:00Z`, event.timezone);
+  // Midday on the selected day: far from either midnight, so the offset it
+  // reports is the one in force for that day rather than one a DST
+  // transition happens to straddle.
+  const referenceInstant = `${selection.day}T12:00:00Z`;
+  const offset = formatOffset(referenceInstant, event.timezone);
 
   return (
     <main className="mx-auto max-w-[110rem] px-4 py-8 sm:px-6 lg:px-8">
@@ -53,6 +57,7 @@ export default async function SchedulePage({
         </div>
         <TimezoneToggle
           params={params}
+          referenceInstant={referenceInstant}
           venueOffset={offset}
           venueName={event.timezone.replace(/_/g, " ")}
           viewerLocal={selection.viewerLocal}
