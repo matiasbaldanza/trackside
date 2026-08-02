@@ -64,7 +64,24 @@ describe("layOutDay", () => {
     // 08:30 local.
     const layout = layOutDay([session({ id: "a", startsAt: "2026-09-24T11:30:00.000Z" })], ROOMS, BA);
     expect(layout.fromMinute).toBe(8 * 60);
-    expect(layout.hours[0]).toEqual({ hour: 8, row: 1 });
+    expect(layout.hours[0]).toMatchObject({ hour: 8, row: 1 });
+  });
+
+  it("gives each hour mark the instant it sits at", () => {
+    // The axis is labelled in venue time by default, but a reader can ask for
+    // their own -- which only an instant can be re-expressed in.
+    const layout = layOutDay(
+      [session({ id: "a", startsAt: "2026-09-24T13:00:00.000Z", durationMinutes: 90 })],
+      ROOMS,
+      BA,
+    );
+    // 13:00Z is 10:00 local, so the 10:00 mark is that instant exactly.
+    expect(layout.hours[0]).toMatchObject({ hour: 10, instant: "2026-09-24T13:00:00.000Z" });
+    expect(layout.hours[1]?.instant).toBe("2026-09-24T14:00:00.000Z");
+  });
+
+  it("has no anchoring instant on a day with no sessions", () => {
+    expect(layOutDay([], ROOMS, BA).hours.every((mark) => mark.instant === null)).toBe(true);
   });
 
   it("ends the axis on the hour after the last session ends", () => {

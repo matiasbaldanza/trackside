@@ -57,8 +57,16 @@ export interface DayLayout {
   /** Local minutes at the bottom. */
   toMinute: number;
   rowCount: number;
-  /** Local hours to label down the time axis, with their grid rows. */
-  hours: { hour: number; row: number }[];
+  /**
+   * The marks down the time axis.
+   *
+   * Each carries the instant it sits at as well as the venue hour, because a
+   * reader who has asked for their own timezone needs the axis to agree with
+   * the cards beside it -- and only an instant can be re-expressed in another
+   * zone. `null` when the day has no sessions to anchor against, in which case
+   * no axis is drawn anyway.
+   */
+  hours: { hour: number; row: number; instant: string | null }[];
   placements: Map<string, Placement>;
 }
 
@@ -116,9 +124,29 @@ export function layOutDay(
     });
   }
 
-  const hours: { hour: number; row: number }[] = [];
+  // The instant at a given local minute is derived from a session rather than
+  // reconstructed from the date and the zone, because the inverse conversion
+  // -- local wall time back to an instant -- is the one Intl does not offer.
+  // The arithmetic is exact except across a DST transition falling inside the
+  // conference day, where labels after the transition would be an hour out.
+  // That is a case this programme does not have and the schema does not
+  // prevent; it is recorded here rather than hidden.
+  const anchor = spans.reduce<(typeof spans)[number] | null>(
+    (earliest, span) => (!earliest || span.start < earliest.start ? span : earliest),
+    null,
+  );
+  const anchorTime = anchor ? new Date(anchor.session.startsAt).getTime() : null;
+
+  const hours: { hour: number; row: number; instant: string | null }[] = [];
   for (let minute = fromMinute; minute < clamped; minute += 60) {
-    hours.push({ hour: minute / 60, row: (minute - fromMinute) / ROW_MINUTES + 1 });
+    hours.push({
+      hour: minute / 60,
+      row: (minute - fromMinute) / ROW_MINUTES + 1,
+      instant:
+        anchor && anchorTime !== null
+          ? new Date(anchorTime + (minute - anchor.start) * 60_000).toISOString()
+          : null,
+    });
   }
 
   return { fromMinute, toMinute: clamped, rowCount, hours, placements };

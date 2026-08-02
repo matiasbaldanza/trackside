@@ -2,6 +2,8 @@ import type { Day, Room } from "@/lib/sanity";
 import { formatDayHeading } from "@/lib/schedule/format";
 import { layOutDay } from "@/lib/schedule/layout";
 
+import { Clock } from "./Clock";
+import { NowMarker } from "./NowMarker";
 import { SessionCard } from "./SessionCard";
 
 /**
@@ -28,12 +30,14 @@ export function DaySchedule({
   day,
   rooms,
   timeZone,
+  viewerLocal,
   headingId,
   emptyMessage = "Nothing scheduled for this day yet.",
 }: {
   day: Day;
   rooms: readonly Room[];
   timeZone: string;
+  viewerLocal: boolean;
   headingId?: string;
   emptyMessage?: string;
 }) {
@@ -87,13 +91,17 @@ export function DaySchedule({
           className="absolute inset-0 hidden lg:grid"
           style={{ gridTemplateColumns, gridTemplateRows }}
         >
-          {layout.hours.map(({ hour, row }) => (
+          {layout.hours.map(({ hour, row, instant }) => (
             <div
               key={`label-${hour}`}
               className="tabular self-start pr-3 text-right text-xs text-faint"
               style={{ gridRow: row, gridColumn: 1 }}
             >
-              {String(hour).padStart(2, "0")}:00
+              {instant ? (
+                <Clock instant={instant} timeZone={timeZone} viewerLocal={viewerLocal} />
+              ) : (
+                `${String(hour).padStart(2, "0")}:00`
+              )}
             </div>
           ))}
           {layout.hours.map(({ hour, row }) => (
@@ -124,11 +132,18 @@ export function DaySchedule({
                     : undefined
                 }
               >
-                <SessionCard session={session} timeZone={timeZone} />
+                <SessionCard session={session} timeZone={timeZone} viewerLocal={viewerLocal} />
               </li>
             );
           })}
         </ol>
+
+        <NowMarker
+          date={day.date}
+          fromMinute={layout.fromMinute}
+          rowCount={layout.rowCount}
+          timeZone={timeZone}
+        />
       </div>
     </section>
   );

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 
 import { DaySchedule } from "@/components/schedule/DaySchedule";
 import { ScheduleFilters } from "@/components/schedule/ScheduleFilters";
+import { TimezoneToggle } from "@/components/schedule/TimezoneToggle";
 import { getProgramme } from "@/lib/sanity";
 import { filterDay, resolveSelection, visibleRooms, type ScheduleParams } from "@/lib/schedule/filters";
 import { formatOffset } from "@/lib/schedule/format";
@@ -41,16 +42,22 @@ export default async function SchedulePage({
   const day = days.find((candidate) => candidate.date === selection.day) ?? days[0];
   const where = [event.venueName, event.city].filter(Boolean).join(", ");
   const offset = formatOffset(`${selection.day}T12:00:00Z`, event.timezone);
+  const viewerLocal = params.tz === "local";
 
   return (
     <main className="mx-auto max-w-[110rem] px-4 py-8 sm:px-6 lg:px-8">
-      <header className="border-b border-line pb-6">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{event.name}</h1>
-        {event.tagline ? <p className="mt-1 text-muted">{event.tagline}</p> : null}
-        <p className="mt-3 text-sm text-faint">
-          {where ? `${where} · ` : ""}
-          All times {offset}
-        </p>
+      <header className="flex flex-col gap-4 border-b border-line pb-6 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{event.name}</h1>
+          {event.tagline ? <p className="mt-1 text-muted">{event.tagline}</p> : null}
+          {where ? <p className="mt-3 text-sm text-faint">{where}</p> : null}
+        </div>
+        <TimezoneToggle
+          params={params}
+          venueOffset={offset}
+          venueName={event.timezone.replace(/_/g, " ")}
+          viewerLocal={viewerLocal}
+        />
       </header>
 
       <div className="mt-6">
@@ -63,6 +70,7 @@ export default async function SchedulePage({
             day={filterDay(day, selection)}
             rooms={visibleRooms(rooms, selection)}
             timeZone={event.timezone}
+            viewerLocal={viewerLocal}
             headingId={`day-${day.date}`}
             emptyMessage={
               selection.room

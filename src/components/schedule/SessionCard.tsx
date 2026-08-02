@@ -1,8 +1,9 @@
 import Link from "next/link";
 
 import type { ScheduledSession } from "@/lib/sanity";
-import { formatChange, formatTime } from "@/lib/schedule/format";
+import { changedFromInstant, changedFromRoom } from "@/lib/schedule/format";
 
+import { Clock } from "./Clock";
 import { StatusBadge } from "./StatusBadge";
 
 /**
@@ -23,24 +24,33 @@ import { StatusBadge } from "./StatusBadge";
 export function SessionCard({
   session,
   timeZone,
+  viewerLocal,
 }: {
   session: ScheduledSession;
   timeZone: string;
+  viewerLocal: boolean;
 }) {
   const isInterval = session.type === "break" || session.type === "registration";
   const isCancelled = session.status.state === "cancelled";
-  const change = formatChange(session, timeZone);
+  const wasAt = changedFromInstant(session);
+  const wasIn = changedFromRoom(session);
 
   const body = (
     <>
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        <time
-          dateTime={session.startsAt}
+        <Clock
+          instant={session.startsAt}
+          timeZone={timeZone}
+          viewerLocal={viewerLocal}
           className={`text-sm font-medium ${isCancelled ? "text-faint" : "text-muted"}`}
-        >
-          {formatTime(session.startsAt, timeZone)}
-        </time>
-        {change ? <span className="text-xs text-faint">({change})</span> : null}
+        />
+        {wasAt ? (
+          <span className="text-xs text-faint">
+            (was{" "}
+            <Clock instant={wasAt} timeZone={timeZone} viewerLocal={viewerLocal} />)
+          </span>
+        ) : null}
+        {wasIn ? <span className="text-xs text-faint">(was {wasIn})</span> : null}
         <span className="text-xs text-faint lg:sr-only">· {session.room.name}</span>
       </div>
 

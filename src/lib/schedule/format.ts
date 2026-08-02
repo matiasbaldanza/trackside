@@ -65,6 +65,21 @@ export function formatOffset(instant: string | Date, timeZone: string): string {
   return (label ?? "UTC").replace("GMT", "UTC").replace("-", "−");
 }
 
+/**
+ * A timezone named and quantified: `UTC+2 · Europe Berlin`.
+ *
+ * Used for the reader's own zone, where the offset alone is not enough --
+ * "UTC+2" is a fact about arithmetic, and the identifier is what lets someone
+ * recognise whether the page has guessed their location correctly.
+ *
+ * Pure, and takes the zone as an argument, so that the client component that
+ * discovers the reader's zone contains no formatting logic of its own and this
+ * can be tested without a browser.
+ */
+export function formatZoneLabel(instant: string | Date, timeZone: string): string {
+  return `${formatOffset(instant, timeZone)} · ${timeZone.replace(/_/g, " ")}`;
+}
+
 const TYPE_LABELS: Record<SessionType, string> = {
   talk: "Talk",
   keynote: "Keynote",
@@ -124,18 +139,24 @@ export function formatStatus(session: ScheduledSession): string | null {
  * What a status change means for someone reading the printed programme.
  *
  * A delay is only intelligible against the time it was supposed to start, and
- * a move against the room it was supposed to be in. Without this, a schedule
+ * a move against the room it was supposed to be in. Without these, a schedule
  * that quietly renders the new values is indistinguishable from one that was
  * always right.
+ *
+ * The time case returns an instant rather than a formatted string, because the
+ * reader may have asked for their own timezone and only a component knows
+ * that. The room case is a name and has no such problem.
  */
-export function formatChange(session: ScheduledSession, timeZone: string): string | null {
-  if (session.status.state === "delayed" && session.startsAt !== session.plannedStartsAt) {
-    return `was ${formatTime(session.plannedStartsAt, timeZone)}`;
-  }
-  if (session.status.state === "moved" && session.room.id !== session.plannedRoom.id) {
-    return `was ${session.plannedRoom.name}`;
-  }
-  return null;
+export function changedFromInstant(session: ScheduledSession): string | null {
+  return session.status.state === "delayed" && session.startsAt !== session.plannedStartsAt
+    ? session.plannedStartsAt
+    : null;
+}
+
+export function changedFromRoom(session: ScheduledSession): string | null {
+  return session.status.state === "moved" && session.room.id !== session.plannedRoom.id
+    ? session.plannedRoom.name
+    : null;
 }
 
 /** Whether a state needs to be visually distinguished at all. */
