@@ -79,7 +79,7 @@ export function LocalTime({
  * Both fall back to the venue's values until they know better, for the same
  * reason as `LocalTime`: what the server can say truthfully is what it says.
  */
-export function LocalOffset({ instant, fallback }: { instant: string; fallback: string }) {
+export function LocalOffset({ fallback, instant }: { fallback: string; instant: string }) {
   const offset = useSyncExternalStore(
     neverChanges,
     () => {
