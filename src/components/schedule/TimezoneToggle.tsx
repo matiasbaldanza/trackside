@@ -24,17 +24,22 @@ import { LocalOffset, LocalZoneName } from "./LocalTime";
  *
  * ## Why this is two lines
  *
- * The control and the offset sit on one line; the zone's name sits on the
- * next. That is a layout decision, and it is load-bearing.
+ * The control has its own line and nothing follows it; the offset and the zone
+ * name go on the next. That is a layout decision, and it is load-bearing.
  *
- * An offset is five characters in almost every zone, and `tabular-nums` makes
- * `UTC−3` and `UTC+2` the same width to the pixel, so a slot of reserved width
- * holds it without the control ever moving. A zone identifier is not
- * predictable at all -- `UTC` to `America/Argentina/Buenos_Aires` -- and while
- * it sat inline the control jumped 159 pixels: once when the reader toggled,
- * and again, unprompted, when the client swapped its guess in after
- * hydration. On its own line, with nothing beside it, its width is nobody's
- * business.
+ * While the label sat beside the control, the control jumped 159 pixels --
+ * once when the reader toggled, and again, unprompted, when the client swapped
+ * its own zone in after hydration. Nothing that changes width may sit next to
+ * a control whose position should be stable, and every part of this label
+ * changes width: the offset between `UTC−3` and `UTC−09:30`, the identifier
+ * between `UTC` and `America/Argentina/Buenos_Aires`.
+ *
+ * Reserving a fixed slot for the offset was tried first and removed. It held
+ * the position, but a slot sized for the widest case is mostly empty in the
+ * common one, so the control floated short of the right edge and read as
+ * unbalanced. Moving the whole label down solves the shift and the alignment
+ * at once: the control ends its line, so it sits flush right, and the label
+ * below can be any width because nothing is beside it.
  *
  * A tooltip would also have removed the shift, and was rejected: `title` is
  * unreachable by keyboard and by touch, and "has it guessed my zone right?" is
@@ -83,15 +88,15 @@ export function TimezoneToggle({
             My time
           </Link>
         </div>
-        {/* Reserved width, tabular figures. Wide enough for the longest real
-            offset (`UTC−09:30`), so nothing to its left can be moved by what
-            lands in it -- neither a toggle nor a hydration swap. */}
-        <span className="tabular inline-block w-[4.75rem] shrink-0 text-faint">
-          {viewerLocal ? <LocalOffset fallback={venueOffset} /> : venueOffset}
-        </span>
       </div>
-      <p className="text-xs text-faint">
-        {viewerLocal ? <LocalZoneName fallback={venueName} /> : venueName}
+      <p className="tabular text-xs text-faint">
+        {viewerLocal ? (
+          <>
+            <LocalOffset fallback={venueOffset} /> · <LocalZoneName fallback={venueName} />
+          </>
+        ) : (
+          `${venueOffset} · ${venueName}`
+        )}
       </p>
     </div>
   );
