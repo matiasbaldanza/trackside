@@ -138,7 +138,69 @@ saying what it is, which is usually the part the reader needed.
   The merge commit is the milestone boundary. `git log --first-parent` reads as one line per
   milestone; the full log still shows every atomic commit.
 
-- Tag each merged milestone: `git tag -a milestone-N -m "Milestone N — Name"`.
+- Tag each merged milestone. See below.
+
+### Branches, tags and previews
+
+**Branch names**
+
+| Pattern | For |
+| --- | --- |
+| `milestone/N-short-name` | One per milestone, one pull request |
+| `chore/…`, `fix/…`, `docs/…` | Work that is not a milestone |
+| `preview/milestone-N` | A frozen deployment pointer. Never merged, never deleted, never moved |
+
+**Pushing is the repository owner's call.** Commit freely; do not `git push`. CodeRabbit reviews
+every push, and pushing an unfinished branch spends a review pass on a state that is already
+being rewritten — the findings that matter then arrive buried among findings that were already
+fixed before they were raised.
+
+**Merge commit bodies.** GitHub generates the title line; write the body in three parts:
+
+1. What the milestone delivers, in plain terms.
+2. Which decisions it produced, naming the ADRs.
+3. What was verified — **and what was not.**
+
+The third part is not optional. `git log --first-parent` shows one commit per milestone, so for
+anyone reading `main` this body *is* the milestone. A reader who cannot tell which claims were
+measured and which were assumed has been given a summary, not a record.
+
+**Tags.** Annotated, `milestone-N`, once the merge is on `main`:
+
+```bash
+git checkout main && git pull --ff-only && git tag -a milestone-4 -m "Milestone 4 — The public schedule" && git push origin milestone-4
+```
+
+`milestones-2-and-3` predates this convention — two milestones landed in one pull request. It
+stays as it is. Retagging would break anything already pointing at it, and the irregularity is a
+true record of what happened.
+
+**Preview branches.** From Milestone 4 onward, every milestone keeps a permanently reachable
+deployment, so milestones can be compared side by side rather than described. Branch from the
+merge commit on `main` and leave it alone forever:
+
+```bash
+git branch preview/milestone-4 <merge-commit>
+```
+
+The intent is that Vercel gives every branch a stable alias — `trackside-git-<branch>-<scope>.vercel.app`
+— which moves only when the branch moves, so a branch that never moves is a permanent URL needing
+no deployment hash looked up and no alias assigned by hand. Production tracks `main`.
+
+> **Unverified.** No deployment has been run yet, so the alias format and its persistence are
+> expectations rather than observations. Confirm both on the first deployment and correct this
+> section from what actually happens.
+
+Two properties to keep in mind:
+
+- **The branch must never move.** A single extra commit silently repoints a URL that may already
+  have been cited somewhere outside this repository.
+- **A preview freezes the code, not the content.** Every deployment reads the live dataset, so an
+  old preview shows old code against *current* content. That is precisely what makes two previews
+  comparable — same content, different code, so the difference is the change — but it is not an
+  archive of how the site looked on a given date, and must not be described as one.
+
+The URLs will be recorded in `docs/deployments.md`, written with the first deployment.
 
 ### Process
 
