@@ -1,0 +1,144 @@
+import type { LiveState, ScheduledSession, SessionType } from "@/lib/sanity";
+
+/**
+ * How times, dates and statuses read on the page.
+ *
+ * Separate from `sanity/lib/scheduling.ts`, which the Studio also imports:
+ * that module formats for editors inside Sanity, this one formats for
+ * attendees. Sharing them would tie two interfaces with different audiences
+ * to the same strings.
+ *
+ * Every function takes the timezone it should format in. There is no ambient
+ * default, because the two answers -- the venue's timezone and the reader's --
+ * are both correct depending on who is asking, and a default would silently
+ * pick one.
+ */
+
+/** `14:30`, always 24-hour, always two digits, so a column of times aligns. */
+export function formatTime(instant: string | Date, timeZone: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date(instant));
+}
+
+/** `Thu 24 Sep`, for a day tab. */
+export function formatDayLabel(date: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(new Date(`${date}T00:00:00Z`));
+}
+
+/** `Thursday 24 September`, for a heading that is read rather than scanned. */
+export function formatDayHeading(date: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date(`${date}T00:00:00Z`));
+}
+
+/**
+ * The offset a timezone is at on a given instant, as `UTC−3`.
+ *
+ * Computed at an instant rather than stated as a constant because it is not
+ * one: Buenos Aires is UTC−3 all year, but a conference in Berlin is UTC+1 in
+ * March and UTC+2 in July, and the label has to agree with the times printed
+ * next to it.
+ */
+export function formatOffset(instant: string | Date, timeZone: string): string {
+  const label = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    timeZoneName: "shortOffset",
+  })
+    .formatToParts(new Date(instant))
+    .find((part) => part.type === "timeZoneName")?.value;
+
+  // Intl gives "GMT-3"; the minus is a hyphen, which renders short and reads
+  // as a hyphenation in the middle of a sentence.
+  return (label ?? "UTC").replace("GMT", "UTC").replace("-", "−");
+}
+
+const TYPE_LABELS: Record<SessionType, string> = {
+  talk: "Talk",
+  keynote: "Keynote",
+  workshop: "Workshop",
+  panel: "Panel",
+  break: "Break",
+  registration: "Registration",
+};
+
+export function formatType(type: SessionType): string {
+  return TYPE_LABELS[type] ?? "Talk";
+}
+
+const LANGUAGE_LABELS: Record<string, string> = {
+  es: "Spanish",
+  en: "English",
+};
+
+export function formatLanguage(language: string | null): string | null {
+  if (!language) return null;
+  return LANGUAGE_LABELS[language] ?? language.toUpperCase();
+}
+
+const LEVEL_LABELS: Record<string, string> = {
+  intro: "Introductory",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+};
+
+export function formatLevel(level: string | null): string | null {
+  if (!level) return null;
+  return LEVEL_LABELS[level] ?? level;
+}
+
+/**
+ * The status in words.
+ *
+ * Returns `null` for a session running as planned. "On time" on twenty-six
+ * cards is noise that makes the two cards that say something else harder to
+ * find, which is the opposite of what a status is for.
+ */
+export function formatStatus(session: ScheduledSession): string | null {
+  const { state, delayMinutes, movedTo } = session.status;
+  switch (state) {
+    case "delayed":
+      return delayMinutes ? `Delayed ${delayMinutes} min` : "Delayed";
+    case "moved":
+      return movedTo ? `Moved to ${movedTo.name}` : "Moved";
+    case "cancelled":
+      return "Cancelled";
+    default:
+      return null;
+  }
+}
+
+/**
+ * What a status change means for someone reading the printed programme.
+ *
+ * A delay is only intelligible against the time it was supposed to start, and
+ * a move against the room it was supposed to be in. Without this, a schedule
+ * that quietly renders the new values is indistinguishable from one that was
+ * always right.
+ */
+export function formatChange(session: ScheduledSession, timeZone: string): string | null {
+  if (session.status.state === "delayed" && session.startsAt !== session.plannedStartsAt) {
+    return `was ${formatTime(session.plannedStartsAt, timeZone)}`;
+  }
+  if (session.status.state === "moved" && session.room.id !== session.plannedRoom.id) {
+    return `was ${session.plannedRoom.name}`;
+  }
+  return null;
+}
+
+/** Whether a state needs to be visually distinguished at all. */
+export function isDisrupted(state: LiveState): boolean {
+  return state !== "onTime";
+}
