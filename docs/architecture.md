@@ -8,18 +8,15 @@
 
 Three parts:
 
-- **The Next.js application** — will serve the public schedule, rendered on the server, deployed to
-  Vercel. It currently serves an empty page; the schedule arrives in Milestone 4.
-- **Sanity Studio** — the editorial interface, served by that same application at `/studio`.
-  Running, with an empty schema. See
+- **The Next.js application** — serves the public schedule, rendered on the server.
+- **Sanity Studio** — the editorial interface, served by that same application at `/studio`. See
   [ADR-0001](./decisions/0001-embed-sanity-studio-in-the-next-application.md).
 - **Sanity's Content Lake** — where content lives. A managed service with no self-hosted
   equivalent; the Studio and the application are both clients of it.
 
-**Intended once content exists:** the application reads on the server, so a visitor's browser never
-talks to the Content Lake. The Studio, running in the editor's browser, does — which is why its
-origin must be registered for CORS while the public site needs no such registration. The CORS
-asymmetry is already real and already verified; the server-side reading is not yet implemented.
+The application reads on the server, so a visitor's browser never talks to the Content Lake. The
+Studio, running in the editor's browser, does — which is why its origin must be registered for
+CORS while the public site needs no such registration.
 
 ```mermaid
 flowchart LR
@@ -185,7 +182,7 @@ sanity/lib/validation.ts   fetches candidates, turns answers into messages
 sanity/schemas/…           declares which rule is an error and which a warning
 ```
 
-The separation exists so that the rules can be tested. `scheduling.ts` imports nothing and has 42
+The separation exists so that the rules can be tested. `scheduling.ts` imports nothing and has 47
 unit tests; `validation.ts` is a thin layer that is exercised by using the Studio. Overlap
 detection, day derivation and the event-bounds check are all decided in the pure layer — the
 schema only decides severity.
@@ -210,18 +207,187 @@ Two further details that are easy to get wrong:
 
 ## Data access
 
-_To be written in Milestone 4._ The boundary around Sanity, the typed query layer, the single
-fetching helper, and how generated types flow from the schema to the components.
+**Nothing outside `src/lib/sanity/` imports the Sanity client, writes GROQ, or handles a Sanity
+document.** Routes call four functions and receive types defined in this repository. The reasoning
+and the costs are in
+[ADR-0006](./decisions/0006-confine-sanity-access-to-one-directory.md).
+
+```mermaid
+flowchart TD
+    schema["sanity/schemas/*<br/>the content model"]
+    json["schema.json"]
+    types["sanity.types.ts<br/>ProgrammeQueryResult, …"]
+    queries["queries.ts<br/>defineQuery"]
+
+    fetchmod["fetch.ts<br/>tags · revalidation"]
+    client["client.ts<br/>useCdn: false"]
+    lake[("Content Lake")]
+    map["programme.ts<br/>documents → view models"]
+    index["index.ts<br/>getProgramme() · getSession()"]
+    routes["app/ and components/<br/>Programme, SessionDetail, Room"]
+
+    schema -->|"schema extract"| json
+    json -->|"typegen generate"| types
+    queries -->|"parsed by typegen"| types
+    types -.->|"compile-time check"| index
+
+    index --> fetchmod --> client --> lake
+    index --> map --> index
+    index --> routes
+```
+
+The dotted edge is what makes `pnpm schema:check` mean something. `index.ts` fetches as
+`ProgrammeQueryResult` and hands that value straight to a mapping function which declares its own
+input shape — so removing a field from the schema stops the application compiling, rather than
+producing `undefined` at runtime.
+
+Those two type sets are deliberately not the same. Typegen describes what the Studio *will write*;
+the mapper's input types are wider, because **the Content Lake is schemaless** and a document
+created while an option existed still holds that value after the option is removed. Typegen checks
+the queries; the runtime guards handle what may actually arrive.
+
+### The mapping layer, and the one rule it exists to enforce
+
+`programme.ts` converts documents into `Programme`, `Day`, `ScheduledSession`, `Room` and
+`Speaker`. Two things happen there that could not safely happen anywhere else.
+
+**The `liveStatus` contract.** That object hides fields by state rather than clearing them — see
+its docstring — so a session marked delayed by twenty minutes and then set back to on time still
+carries `delayMinutes: 20`. `toStatus` drops `delayMinutes` unless the state is `delayed` and
+`movedTo` unless it is `moved`. Enforcing this at every call site would mean trusting every call
+site.
+
+**Planned against effective.** A delayed session's `startsAt` has the delay applied and its
+`plannedStartsAt` does not; a moved session's `room` is the new one and `plannedRoom` the old. So
+components render "14:10 (was 13:50)" without knowing any status rules, and the grid places a
+moved session in the right column for free. A cancelled session keeps its planned slot, because
+somebody looking for it is looking where the printed programme put it.
+
+Both are unit-tested, which is only possible because the layer is pure.
+
+### Caching policy
+
+Expressed once, in `fetch.ts`. Two things are being decided, and they are not the same thing —
+**tags decide what an invalidation reaches; intervals belong to a read.**
+
+The tags are named after what changes rather than after what is displayed:
+
+| Tag | Covers |
+| --- | --- |
+| `programme` | Which sessions exist, when they were planned, who speaks, the rooms |
+| `status` | Live status only, the volatile half |
+
+The intervals are per read, because a request carries one:
+
+| Read | Tags | Interval |
+| --- | --- | --- |
+| `getProgramme` | `programme`, `status` | 1 minute |
+| `getSession` | `programme`, `status` | 1 minute |
+| `getSessionSlugs` | `programme` | 1 hour |
+
+The first two fetch structure and status together, in one round trip, so they take the shorter of
+the two lifetimes — a response is only as fresh as its most volatile part. `getSessionSlugs`
+answers which pages exist, which is a structural question and nothing to do with the event
+running, so it takes the hour.
+
+Splitting the schedule into two requests to give each half its own interval would mean two round
+trips to render one page, and the shorter interval already bounds the staleness of the whole.
+That is the trade, and it is the reason the volatility split shows up in the *tags* rather than in
+the intervals: when the webhook lands in Milestone 5, a biography edit will invalidate `programme`
+without touching a page that only needed `status`, which is where the separation actually pays.
+
+The argument in one sentence: a speaker's biography and a session's live status appear on the same
+page and cannot share a lifetime. The intervals are a floor under correctness, not the freshness
+mechanism — tag invalidation is — and they bound how long a *missed* invalidation can go
+unnoticed.
+
+`client.ts` sets `useCdn: false`, which is the counterintuitive part. Sanity's CDN and Next's Data
+Cache are both caches, and stacking them means an invalidation reaches only the outer one: Next
+re-runs the query, the CDN answers from a stale edge copy, and the page updates to the same wrong
+content with nothing in the logs to say so. Next owns caching here.
 
 ## Rendering and component boundaries
 
-_To be written in Milestone 4._ What renders on the server, the two Client Components and the
-reason each one cannot be a Server Component, and how filtering works without client state.
+Everything is a Server Component except two, and the exceptions are not stylistic — each needs
+something a server does not have.
+
+| Component | What it needs | Why the server cannot supply it |
+| --- | --- | --- |
+| `LocalTime` / `LocalZoneLabel` / `ViewerTimeNote` | The reader's timezone | It is not in any request header |
+| `NowMarker` | A clock that keeps running | The server rendered the page once, possibly a minute ago |
+| `BackToProgramme` | The current query string on a statically rendered page | Reading it on the server would make all 26 session pages dynamic |
+
+Filtering by day and room is **not** client state. Each filter is a `<Link>` to a different URL,
+resolved on the server. That makes a filtered view shareable and bookmarkable, makes the back
+button behave, and costs no JavaScript at all — which matters most on the one page that has to
+work on venue wifi before a bundle arrives.
+
+The filters are deliberately not ARIA tabs. A tablist promises panels that are already present and
+arrow keys that move between them; each of these is a navigation. `aria-current` conveys the fact
+that actually needs conveying.
+
+### Routes
+
+| Route | Rendering | Notes |
+| --- | --- | --- |
+| `/` | Dynamic | Reads `searchParams` for day, room and timezone. Data is cached; the render is per request. |
+| `/sessions/[slug]` | Static (SSG) | `generateStaticParams` prerenders one page per published session. |
+| `/studio/[[...tool]]` | Static shell | The Studio itself is a client application. |
+
+The detail route stays static because it does not read `searchParams` at all. It would have had to,
+to carry the timezone preference — so instead it shows venue time and the reader's own time
+together, and isolates the one thing that genuinely needs the URL (the back link's timezone
+parameter) behind a Suspense boundary.
+
+### The timetable's markup
+
+One ordered list per day, in chronological order, with inline `grid-row` and `grid-column` on each
+item; `display: grid` above `lg` and `display: flex` below it. No markup is rendered twice.
+[ADR-0005](./decisions/0005-render-the-timetable-as-one-chronological-list.md) records why, and
+what it costs — chiefly that the room headers are `aria-hidden` decoration, so every card carries
+its room name in the accessibility tree.
 
 ## Timezones
 
-_To be written in Milestone 4._ Where time is stored, where it is converted, the hydration hazard
-created by rendering a viewer's local time, and how it is contained.
+Four places, and they do different things:
+
+1. **Storage.** `startsAt` is a UTC instant. Sanity stores datetimes exactly as written, so the
+   fixtures normalise to `Z` and a test enforces it — an offset form and a `Z` form in one dataset
+   compare wrongly under GROQ's lexicographic string comparison.
+2. **Grouping into days.** Each instant is converted to the **venue's** date before grouping. A
+   session at 23:30 in Buenos Aires is already tomorrow in UTC, so grouping on raw timestamps files
+   late sessions under the wrong day — quietly, and only sometimes.
+3. **Grid placement.** `layOutDay` works in *minutes since local midnight at the venue*, not in
+   UTC offsets. A grid derived from UTC lines up only where the venue's offset is a whole number of
+   hours, and is half an hour out in Kolkata or Adelaide. Tested.
+4. **Display.** Venue time by default, everywhere, because a conference is spoken in venue time all
+   day — signage, announcements, the person next to you.
+
+### The viewer's own time, and the hydration hazard
+
+The browser's timezone is unknowable on the server, so rendering it is a hydration hazard by
+construction: the server says `10:45`, the client wants `15:45`, and React either warns or silently
+keeps whichever it saw first.
+
+It is contained with `useSyncExternalStore` rather than state set from an effect. The **server
+snapshot** is the venue time already in the HTML, and React uses it for the hydrating render; the
+**client snapshot** is the reader's own, read immediately afterwards. So the first client render is
+byte-identical to the HTML, and the swap is a second render rather than a correction of a
+mismatched one.
+
+Zero layout shift falls out of the format rather than from a fixed width: both strings are 24-hour
+and zero-padded, so both are five characters, and `font-variant-numeric: tabular-nums` in the
+global stylesheet makes those five characters the same width whatever the digits are.
+
+Without JavaScript the page shows venue time, correctly labelled as venue time. That is the
+degraded state and it is a correct one.
+
+The axis re-expresses itself too, which is why `layOutDay` returns an *instant* per hour mark
+rather than an hour: only an instant can be restated in another zone. That instant is derived from
+a session in the same day rather than reconstructed from the date and the zone, because converting
+local wall time back to an instant is the one direction `Intl` does not offer. The arithmetic is
+exact except across a DST transition falling inside a conference day, which is recorded in the
+code rather than hidden.
 
 ## Caching and invalidation
 

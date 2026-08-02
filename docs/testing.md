@@ -11,7 +11,7 @@ come from, and which of those are worth catching automatically.
 ## Automated
 
 ### Unit — scheduling logic ✅
-`sanity/lib/scheduling.test.ts` — 42 tests over overlap detection, end-time derivation, venue-date
+`sanity/lib/scheduling.test.ts` — 47 tests over overlap detection, end-time derivation, venue-date
 conversion, day derivation and event bounds. These are pure functions precisely so they can be
 tested without booting a Studio, which is what makes the validation rules verifiable at all.
 
@@ -20,8 +20,44 @@ making intervals closed (so back-to-back sessions become conflicts) and dropping
 adjustment in the event-bounds check (so a session ending at midnight falls outside the
 conference). Each was caught by exactly one test, naming the behaviour that broke.
 
-### Unit — query result transformation
-_Milestone 4._ Mapping query results into the view models the components consume.
+### Unit — the fixture programme ✅
+`fixtures/nodo-conf.test.ts` — 22 tests running the seeded programme through the same pure
+functions the Studio's validation uses. Unique ids, **no dots in any id**, every `startsAt`
+normalised to `Z`, no room double-booked, everything inside the conference dates, workshops with
+capacity and a sign-up URL, no speakers on intervals, referential integrity, both days spanned.
+
+Two of those exist because of incidents rather than foresight: a document id containing a dot is
+private regardless of dataset visibility, and Sanity stores datetimes exactly as written. Both
+shipped, both were silent, and both are now assertions.
+
+### Unit — query result transformation ✅
+`src/lib/sanity/programme.test.ts` — 30 tests over the boundary between Sanity's documents and the
+model the interface renders.
+
+This is where the `liveStatus` contract is proven. The schema hides fields by state rather than
+clearing them, so a session marked delayed by twenty minutes and then set back to on time still
+carries `delayMinutes: 20` in the document. Several tests exist only to check that such leftovers
+are dropped, that a delay actually moves a start time while leaving the planned one intact, that a
+moved session is placed in its new room and remembers the old one, and that a cancelled session
+keeps the slot the printed programme gave it.
+
+The rest cover what happens to content the type system says is impossible — an unrecognised
+session type, a state the interface has no design for, a room reference that no longer resolves.
+The Content Lake is schemaless, so those are reachable states rather than defensive padding.
+
+### Unit — grid placement, filtering and formatting ✅
+`src/lib/schedule/layout.test.ts` — 16 tests. The axis derived from the day's content, spans
+proportional to duration, a moved session's column, a delayed session's row, clamping a session
+that runs past midnight, refusing to place a session whose room has no column, and correct row
+alignment in a timezone whose offset is not a whole number of hours.
+
+`src/lib/schedule/filters.test.ts` — 16 tests. Which day opens by default, including the case
+where it is already tomorrow in Europe and still today in Buenos Aires; unknown values falling
+back rather than producing an empty page; and URLs keeping the parameters they were not asked to
+change.
+
+`src/lib/schedule/format.test.ts` — 16 tests. One instant in two zones, offsets on both sides of a
+DST boundary, and what a status change says about the programme a reader is holding.
 
 ### End to end
 _Milestone 6._ One journey: open the schedule, change day, filter by room, switch to viewer-local
@@ -46,7 +82,10 @@ are recorded below; unticked ones are planned for the milestone noted and have *
 - ⬜ The live operations pane and the status action, on a phone. _Milestone 5._
 - ⬜ Webhook delivery and cache invalidation end to end, against the deployed site. _Milestone 5._
 - ⬜ A screen-reader pass over the timetable. _Milestone 6._
-- ⬜ A real-handset pass on the mobile layout. _Milestone 6._
+- ⬜ A real-handset pass on the mobile layout. _Milestone 6._ The agenda has been checked at a
+  375px viewport, which is not the same thing: it says nothing about touch targets, about reading
+  the schedule in daylight, or about the layout on a device with a notch.
+- ⬜ The viewer-local time swap, from a machine outside the venue's timezone. _Milestone 6._
 
 ## Results
 
@@ -84,6 +123,26 @@ Only checks that actually ran appear here.
 | `pnpm content:reset` dry run | Reported 50 documents including 1 draft; changed nothing |
 | `pnpm content:reset -- --no-dry-run` | Deleted 50, wrote 49 |
 | `pnpm content:export` | 50 documents archived; used before the reset, as the runbook requires |
+
+**2026-08-02 — Milestone 4**
+
+| Check | Result |
+| --- | --- |
+| `pnpm test` | 147 passed |
+| `pnpm typecheck`, `pnpm lint` | Clean |
+| `pnpm build` | Compiled; `/` dynamic, 26 session pages prerendered |
+| Programme query over the public API, unauthenticated | 1 event, 4 rooms, 26 sessions |
+| Timetable at 1440px | Four columns, axis aligned to the cards, spans proportional to duration |
+| Agenda at 375px | Same sessions, chronological, room named on each card |
+| Day switching, room filtering | Correct content; both reachable and shareable as URLs |
+| Session detail | Speakers, times, room, abstract, workshop sign-up |
+| Unknown slug | Renders the not-found page, title *Session not found* |
+
+**Not verified in Milestone 4.** The viewer-local time swap was not observed in a browser: this
+machine's timezone is the venue's, so the two renderings are identical. What that swap depends on
+— formatting one instant in two zones, and offsets on both sides of a DST boundary — is covered by
+`format.test.ts`. The hydration behaviour itself is React's `useSyncExternalStore` contract and is
+not asserted here.
 
 **Manual — Studio validation, verified 2026-08-01**
 

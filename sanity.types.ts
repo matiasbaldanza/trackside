@@ -288,3 +288,119 @@ export type AllSanitySchemaTypes =
   | SanityAssetSourceData
   | SanityImageAsset
   | Geopoint;
+
+// Source: src/lib/sanity/queries.ts
+// Variable: programmeQuery
+// Query: {  "event": *[_type == "event" && !(_id in path("drafts.**"))][0]{    name,    tagline,    startDate,    endDate,    timezone,    venueName,    city  },  "rooms": *[_type == "track" && !(_id in path("drafts.**"))] | order(order asc){    "id": _id,    name,    shortName,    "slug": slug.current,    order,    capacity  },  "sessions": *[    _type == "session"    && !(_id in path("drafts.**"))    && defined(startsAt)    && defined(durationMinutes)    && defined(track._ref)  ] | order(startsAt asc){    "id": _id,    "slug": slug.current,    title,    type,    language,    level,    startsAt,    durationMinutes,    recorded,    captioned,    "roomId": track._ref,    "speakers": speakers[]->{      "id": _id,      name,      "slug": slug.current,      jobTitle,      organisation    },    "status": liveStatus{      state,      delayMinutes,      note,      "movedToRoomId": movedToTrack._ref    }  }}
+export type ProgrammeQueryResult = {
+  event: {
+    name: string;
+    tagline: string | null;
+    startDate: string;
+    endDate: string;
+    timezone: string;
+    venueName: string | null;
+    city: string | null;
+  } | null;
+  rooms: Array<{
+    id: string;
+    name: string;
+    shortName: string | null;
+    slug: string;
+    order: number;
+    capacity: number | null;
+  }>;
+  sessions: Array<{
+    id: string;
+    slug: string;
+    title: string;
+    type: "break" | "keynote" | "panel" | "registration" | "talk" | "workshop";
+    language: "en" | "es" | null;
+    level: "advanced" | "intermediate" | "intro" | null;
+    startsAt: string;
+    durationMinutes: number;
+    recorded: boolean | null;
+    captioned: boolean | null;
+    roomId: string;
+    speakers: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      jobTitle: string | null;
+      organisation: string | null;
+    }> | null;
+    status: {
+      state: "cancelled" | "delayed" | "moved" | "onTime";
+      delayMinutes: number | null;
+      note: string | null;
+      movedToRoomId: string | null;
+    } | null;
+  }>;
+};
+
+// Source: src/lib/sanity/queries.ts
+// Variable: sessionQuery
+// Query: {  "event": *[_type == "event" && !(_id in path("drafts.**"))][0]{    name,    tagline,    startDate,    endDate,    timezone,    venueName,    city  },  "rooms": *[_type == "track" && !(_id in path("drafts.**"))] | order(order asc){    "id": _id,    name,    shortName,    "slug": slug.current,    order,    capacity  },  "session": *[    _type == "session"    && !(_id in path("drafts.**"))    && slug.current == $slug  ][0]{    "id": _id,    "slug": slug.current,    title,    type,    abstract,    language,    level,    startsAt,    durationMinutes,    recorded,    captioned,    capacity,    signupUrl,    "roomId": track._ref,    "speakers": speakers[]->{      "id": _id,      name,      "slug": slug.current,      jobTitle,      organisation    },    "status": liveStatus{      state,      delayMinutes,      note,      "movedToRoomId": movedToTrack._ref    }  }}
+export type SessionQueryResult = {
+  event: {
+    name: string;
+    tagline: string | null;
+    startDate: string;
+    endDate: string;
+    timezone: string;
+    venueName: string | null;
+    city: string | null;
+  } | null;
+  rooms: Array<{
+    id: string;
+    name: string;
+    shortName: string | null;
+    slug: string;
+    order: number;
+    capacity: number | null;
+  }>;
+  session: {
+    id: string;
+    slug: string;
+    title: string;
+    type: "break" | "keynote" | "panel" | "registration" | "talk" | "workshop";
+    abstract: string | null;
+    language: "en" | "es" | null;
+    level: "advanced" | "intermediate" | "intro" | null;
+    startsAt: string;
+    durationMinutes: number;
+    recorded: boolean | null;
+    captioned: boolean | null;
+    capacity: number | null;
+    signupUrl: string | null;
+    roomId: string;
+    speakers: Array<{
+      id: string;
+      name: string;
+      slug: string;
+      jobTitle: string | null;
+      organisation: string | null;
+    }> | null;
+    status: {
+      state: "cancelled" | "delayed" | "moved" | "onTime";
+      delayMinutes: number | null;
+      note: string | null;
+      movedToRoomId: string | null;
+    } | null;
+  } | null;
+};
+
+// Source: src/lib/sanity/queries.ts
+// Variable: sessionSlugsQuery
+// Query: *[_type == "session" && !(_id in path("drafts.**")) && defined(slug.current)].slug.current
+export type SessionSlugsQueryResult = Array<string>;
+
+// Query TypeMap
+import "@sanity/client";
+declare module "@sanity/client" {
+  interface SanityQueries {
+    '{\n  "event": *[_type == "event" && !(_id in path("drafts.**"))][0]{\n    name,\n    tagline,\n    startDate,\n    endDate,\n    timezone,\n    venueName,\n    city\n  },\n  "rooms": *[_type == "track" && !(_id in path("drafts.**"))] | order(order asc){\n    "id": _id,\n    name,\n    shortName,\n    "slug": slug.current,\n    order,\n    capacity\n  },\n  "sessions": *[\n    _type == "session"\n    && !(_id in path("drafts.**"))\n    && defined(startsAt)\n    && defined(durationMinutes)\n    && defined(track._ref)\n  ] | order(startsAt asc){\n    "id": _id,\n    "slug": slug.current,\n    title,\n    type,\n    language,\n    level,\n    startsAt,\n    durationMinutes,\n    recorded,\n    captioned,\n    "roomId": track._ref,\n    "speakers": speakers[]->{\n      "id": _id,\n      name,\n      "slug": slug.current,\n      jobTitle,\n      organisation\n    },\n    "status": liveStatus{\n      state,\n      delayMinutes,\n      note,\n      "movedToRoomId": movedToTrack._ref\n    }\n  }\n}': ProgrammeQueryResult;
+    '{\n  "event": *[_type == "event" && !(_id in path("drafts.**"))][0]{\n    name,\n    tagline,\n    startDate,\n    endDate,\n    timezone,\n    venueName,\n    city\n  },\n  "rooms": *[_type == "track" && !(_id in path("drafts.**"))] | order(order asc){\n    "id": _id,\n    name,\n    shortName,\n    "slug": slug.current,\n    order,\n    capacity\n  },\n  "session": *[\n    _type == "session"\n    && !(_id in path("drafts.**"))\n    && slug.current == $slug\n  ][0]{\n    "id": _id,\n    "slug": slug.current,\n    title,\n    type,\n    abstract,\n    language,\n    level,\n    startsAt,\n    durationMinutes,\n    recorded,\n    captioned,\n    capacity,\n    signupUrl,\n    "roomId": track._ref,\n    "speakers": speakers[]->{\n      "id": _id,\n      name,\n      "slug": slug.current,\n      jobTitle,\n      organisation\n    },\n    "status": liveStatus{\n      state,\n      delayMinutes,\n      note,\n      "movedToRoomId": movedToTrack._ref\n    }\n  }\n}': SessionQueryResult;
+    '\n  *[_type == "session" && !(_id in path("drafts.**")) && defined(slug.current)].slug.current\n': SessionSlugsQueryResult;
+  }
+}

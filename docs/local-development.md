@@ -26,8 +26,7 @@ pnpm dev
 No Sanity account, no token. The dataset is public, so published content reads without
 credentials.
 
-There is nothing to display yet — the schedule arrives in Milestone 4 — but the application boots
-and the environment is validated.
+That serves the full schedule at `/` against the live dataset, read as an anonymous visitor.
 
 ### Seeding and editing content
 

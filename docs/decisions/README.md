@@ -18,6 +18,8 @@ Use [`TEMPLATE.md`](./TEMPLATE.md) for new records.
 | [0002](./0002-store-a-start-instant-and-a-duration.md) | Store a start instant and a duration, and derive conference days | Accepted | 2026-08-01 |
 | [0003](./0003-split-validation-by-severity.md) | Split validation by severity, not by importance | Accepted | 2026-08-01 |
 | [0004](./0004-derive-fixture-document-ids-from-slugs.md) | Derive fixture document ids from slugs | Accepted | 2026-08-01 |
+| [0005](./0005-render-the-timetable-as-one-chronological-list.md) | Render the timetable as one chronological list, laid out two ways | Accepted | 2026-08-01 |
+| [0006](./0006-confine-sanity-access-to-one-directory.md) | Confine Sanity access to one directory, behind view models | Accepted | 2026-08-02 |
 
 ## Decisions expected but not yet made
 
@@ -27,7 +29,3 @@ and an unreliable one.
 
 - How content freshness is achieved, given that session status changes during an event while
   speaker biographies do not.
-- How the timetable is expressed in markup, given that a visual grid and a coherent screen-reader
-  reading order pull in different directions.
-- How the boundary around the content source is drawn, so that the application does not depend on
-  a specific CMS client throughout.

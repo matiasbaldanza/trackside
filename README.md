@@ -12,21 +12,30 @@ Seeded content describes **Nodo Conf**, a fictional two-day conference in Buenos
 
 ## Current state
 
-**Milestones 1–3 complete. Milestone 4 — the public schedule — not started.**
+**Milestones 1–4 complete. Milestone 5 — live operations — not started.**
 
 What works today:
 
-- A Next.js 16 application (App Router, React 19, TypeScript, Tailwind 4) serving an empty page.
-- Sanity Studio at `/studio`, with the full conference content model: events, rooms, speakers and
-  sessions.
-- Validation that refuses an impossible programme — two sessions cannot share a room at the same
-  time, and a session cannot fall outside the conference — while letting an unfinished one be
+- **The public schedule.** A timetable with a proportional time axis and one column per room on a
+  wide screen; the same sessions as a chronological agenda on a phone. One list in the document,
+  laid out two ways — see [ADR-0005](./docs/decisions/0005-render-the-timetable-as-one-chronological-list.md).
+- **Filtering by day and room**, as links driving the URL rather than client state, so a filtered
+  view can be shared and costs no JavaScript.
+- **Times in the venue's zone or the reader's own**, with the schedule rendered on the server
+  either way and the viewer's zone resolved after hydration.
+- **A page per session** — abstract, speakers, room, length, sign-up for workshops — prerendered
+  at build time.
+- **Sanity Studio at `/studio`**, with the full content model: events, rooms, speakers, sessions.
+- **Validation that refuses an impossible programme** — two sessions cannot share a room at the
+  same time, and a session cannot fall outside the conference — while letting an unfinished one be
   saved and published.
-- A complete fixture programme for Nodo Conf — 26 sessions across two days in four rooms — loaded
-  with `pnpm seed`.
-- 67 unit tests over the scheduling logic and the fixture programme.
+- **A complete fixture programme for Nodo Conf** — 26 sessions across two days in four rooms —
+  loaded with `pnpm seed`.
+- **144 unit tests** over scheduling, the fixture programme, the query transformation, grid
+  placement, filtering and formatting.
 
-There is no public schedule yet. It is the next milestone in
+Live status is modelled and rendered but nothing writes it yet: the operator's pane, the
+publish-in-one-step action and the invalidation webhook are the next milestone in
 [`docs/roadmap.md`](./docs/roadmap.md).
 
 This section is updated at every milestone and at any commit that changes what the project can do.
@@ -43,7 +52,7 @@ cp .env.example .env.local   # then set NEXT_PUBLIC_SANITY_PROJECT_ID
 pnpm dev
 ```
 
-- `http://localhost:3000` — the application
+- `http://localhost:3000` — the schedule
 - `http://localhost:3000/studio` — Sanity Studio
 
 Reading published content needs no credentials. Using the Studio requires a Sanity project and its

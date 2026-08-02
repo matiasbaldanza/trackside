@@ -45,6 +45,9 @@ docs/untracked/*
 # dataset exports
 /exports
 
+# local agent tooling configuration -- machine-specific, not project setup
+/.claude
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
