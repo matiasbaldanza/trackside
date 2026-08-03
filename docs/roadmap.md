@@ -7,6 +7,21 @@ actually happened stays visible rather than being rewritten.
 
 ---
 
+## Execution model
+
+Milestones describe outcomes and their review boundaries; they are not rewritten into an agent
+task queue. During execution, the lead agent decomposes the next incomplete milestone into bounded,
+self-contained tasks and reviews each result before the following task begins. An implementation
+task states its objective, expected files or directories, constraints, acceptance criteria, and
+minimal validation.
+
+The role split and task-brief contract are defined in `AGENTS.md`. They change how the roadmap is
+executed, not its architecture, priorities, milestones, or completed history. Work already marked
+complete is not replanned unless evidence shows that it conflicts with a repository invariant or a
+recorded decision.
+
+---
+
 ## Milestone 1 — Foundation ✅
 
 **Outcome:** The repository stands up: instructions, decision records, roadmap, and a Next.js

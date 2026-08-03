@@ -6,6 +6,22 @@ and the difference matters to anyone reading this code.
 
 Updated as work proceeds, not reconstructed at the end.
 
+## Execution model from 2026-08-02
+
+Subsequent work uses two roles where a task benefits from delegation. The lead agent owns
+architecture, planning, decomposition, technical decisions, review, and issues requiring senior
+engineering judgement. An implementation agent receives one bounded task, follows established
+patterns, and makes only local implementation decisions.
+
+Each delegated task states its objective, affected files or directories, constraints, acceptance
+criteria, and minimal validation. The lead reviews the resulting diff and the evidence from those
+checks before starting the next task. Small or judgement-heavy changes may remain with the lead
+when delegation would add coordination without improving the review boundary.
+
+This is a prospective execution change. Milestones 1–4 used the interactive model recorded below;
+their history is not restated as though work had been divided between these roles. `AGENTS.md` is
+the canonical definition of the workflow.
+
 ## Tooling
 
 Claude Code (Opus 5), driven interactively from the repository. CodeRabbit reviews pull requests.
