@@ -23,7 +23,7 @@ commit, which never moves again — see *Branches, tags and previews* in `AGENTS
 
 | Milestone | Branch | Commit | URL |
 | --- | --- | --- | --- |
-| 4 — The public schedule | `preview/milestone-4` | `39459d8` | _Pending first push_ |
+| 4 — The public schedule | `preview/milestone-4` | `39459d8` | <https://trackside-git-preview-milestone-4-matias-baldanzas-projects.vercel.app> |
 
 Milestones 1–3 have no preview. They produced no public interface: Milestone 1 served an empty
 page, and Milestones 2–3 were the content model and the fixture programme, both visible only

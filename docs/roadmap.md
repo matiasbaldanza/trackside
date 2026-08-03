@@ -175,14 +175,18 @@ And deploying is where the environment assumptions get tested. Doing it while th
 small meant the pnpm, Node and CORS questions were answered against four routes rather than
 against a finished system.
 
-**Verified:** production deployed and reachable, the schedule rendering real content, `/studio`
-authenticating, filters applying. `docs/runbook.md` §9 written from the run; `docs/deployments.md`
-records the URLs.
+**Verified:** production deployed and reachable, and the Milestone 4 Preview is now permanently
+reachable at its frozen branch alias. The production schedule renders real content, `/studio`
+authenticates on production, and filters apply. `docs/runbook.md` §9 is written from the run;
+`docs/deployments.md` records both URLs.
 
 **What was learned:** the `ERR_PNPM_IGNORED_BUILDS` failure anticipated for `sharp`, `esbuild` and
 `unrs-resolver` did not occur — `pnpm-workspace.yaml`'s `allowBuilds` carried over untouched. The
 deployment that Vercel starts on import, before environment variables exist, is expected to fail
-and is harmless.
+and is harmless. Because `preview/milestone-4` was pushed before Vercel was connected to GitHub, it
+required a manual deployment from the existing Git reference. Deployment Protection initially put
+the Preview behind HTTP 302 authentication; disabling it made the public verification paths return
+HTTP 200.
 
 It also surfaced a defect no local check had: `/sessions/<unknown-slug>` returns HTTP 200 with the
 not-found page instead of 404. A soft 404 is indexable and invisible to monitoring. Recorded in

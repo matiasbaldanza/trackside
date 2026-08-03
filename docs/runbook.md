@@ -438,6 +438,30 @@ Response headers confirm the intended rendering split: `/` carries
 `cache-control: private, no-cache, no-store` with `x-vercel-cache: MISS` (dynamic, per request),
 while `/sessions/[slug]` carries `x-vercel-cache: HIT` (prerendered).
 
+**Milestone 4 Preview verified 2026-08-03 against
+`https://trackside-git-preview-milestone-4-matias-baldanzas-projects.vercel.app`:** the deployment
+was created from branch `preview/milestone-4` at commit `39459d8` (Vercel deployment
+`dpl_LYQtgdCJ8u4HLfyiPhKo8gwriPQQ`). The build completed successfully in 58 seconds, detected
+Next.js `16.2.12`, used pnpm `11.17.0`, and generated all 26 session pages. The anticipated
+`ERR_PNPM_IGNORED_BUILDS` failure for `sharp`, `esbuild` and `unrs-resolver` did not occur.
+
+That branch was pushed before this Vercel project was connected to GitHub, so no automatic Preview
+deployment existed for the earlier push. The recovery was **Deployments → Create Deployment**,
+entering the full Git branch name `preview/milestone-4`, and creating the deployment from that
+existing Git reference. The frozen branch was not moved.
+
+Deployment Protection initially returned HTTP **302** to Vercel Authentication for every tested
+path. After Vercel Authentication was disabled for Preview deployments, `/`,
+`/sessions/apertura-nodo`, `/?day=2026-09-25&room=laboratorio`, and `/studio` all returned HTTP
+**200**, and the schedule rendered real Nodo Conf content including *Nodo Conf*, *Auditorio
+Principal* and *Acreditación y café*. The preview Studio is not expected to authenticate: its
+origin is intentionally absent from Sanity CORS, per §3.
+
+The build log did not print the exact Node version. Vercel deployment metadata reported
+`nodeVersion: 24.x`, and the deployed functions reported runtime `nodejs24.x`. That satisfies the
+repository's current `engines.node: ">=22"` declaration; the declaration remains floating, so
+Vercel may automatically select a later major version in a future deployment.
+
 ### 9.7 Known defect — unknown session slugs return HTTP 200
 
 **Found 2026-08-02, not yet fixed.** `/sessions/does-not-exist` serves the not-found page with
