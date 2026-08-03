@@ -160,6 +160,37 @@ separate work. See ADR-0005.*
 
 ---
 
+## Deployment — pulled forward from Milestone 7 ✅
+
+**Done 2026-08-02, out of sequence and deliberately.**
+
+Milestone 7 still owns continuous integration, the environment matrix per environment, and the
+clean-clone reproduction. What moved earlier is only the first deployment, for two reasons.
+
+Every milestone from 4 onward keeps a frozen preview branch so milestones can be compared side by
+side. That only works if the deployment exists *before* the next milestone changes what it would
+show — the Milestone 4 scaffold cannot be captured after Milestone 4.5 has restyled it.
+
+And deploying is where the environment assumptions get tested. Doing it while the application is
+small meant the pnpm, Node and CORS questions were answered against four routes rather than
+against a finished system.
+
+**Verified:** production deployed and reachable, the schedule rendering real content, `/studio`
+authenticating, filters applying. `docs/runbook.md` §9 written from the run; `docs/deployments.md`
+records the URLs.
+
+**What was learned:** the `ERR_PNPM_IGNORED_BUILDS` failure anticipated for `sharp`, `esbuild` and
+`unrs-resolver` did not occur — `pnpm-workspace.yaml`'s `allowBuilds` carried over untouched. The
+deployment that Vercel starts on import, before environment variables exist, is expected to fail
+and is harmless.
+
+It also surfaced a defect no local check had: `/sessions/<unknown-slug>` returns HTTP 200 with the
+not-found page instead of 404. A soft 404 is indexable and invisible to monitoring. Recorded in
+runbook §9.7 rather than reflexively fixed, because the obvious remedy would make sessions
+published after a build unreachable until the next one.
+
+---
+
 ## Milestone 5 — Live operations ⬜
 
 **Outcome:** The operator loop closes. A change made on a phone in a hallway reaches the public

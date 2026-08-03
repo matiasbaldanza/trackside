@@ -42,6 +42,10 @@ This section is updated at every milestone and at any commit that changes what t
 
 ---
 
+## Live
+
+<https://trackside-events.vercel.app>
+
 ## Running it
 
 Requires **Node 22+** and **pnpm**.
@@ -72,6 +76,7 @@ origin registered for CORS; both are covered in [`docs/runbook.md`](./docs/runbo
 | [`docs/testing.md`](./docs/testing.md) | What is tested automatically, what is verified by hand |
 | [`docs/local-development.md`](./docs/local-development.md) | Reproducing the project locally |
 | [`docs/runbook.md`](./docs/runbook.md) | Operational procedures |
+| [`docs/deployments.md`](./docs/deployments.md) | Where each version is deployed, and what a preview URL means |
 | [`docs/llm-use.md`](./docs/llm-use.md) | How coding agents were used |
 
 ---

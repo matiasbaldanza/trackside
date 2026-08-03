@@ -183,13 +183,15 @@ merge commit on `main` and leave it alone forever:
 git branch preview/milestone-4 <merge-commit>
 ```
 
-The intent is that Vercel gives every branch a stable alias — `trackside-git-<branch>-<scope>.vercel.app`
-— which moves only when the branch moves, so a branch that never moves is a permanent URL needing
-no deployment hash looked up and no alias assigned by hand. Production tracks `main`.
+Vercel gives every branch a stable alias — `trackside-events-git-<branch>-<scope>.vercel.app` —
+which moves only when the branch moves, so a branch that never moves is a permanent URL needing
+no deployment hash looked up and no alias assigned by hand. Production tracks `main` and is served
+at `https://trackside-events.vercel.app`.
 
-> **Unverified.** No deployment has been run yet, so the alias format and its persistence are
-> expectations rather than observations. Confirm both on the first deployment and correct this
-> section from what actually happens.
+> **Partly verified, 2026-08-02.** Production is deployed and confirmed. The *preview branch*
+> alias is still an expectation: `preview/milestone-4` has not been pushed, so neither the alias
+> format for a branch nor its persistence over time has been observed. Confirm on first push and
+> correct this from what actually happens.
 
 Two properties to keep in mind:
 
@@ -200,7 +202,7 @@ Two properties to keep in mind:
   comparable — same content, different code, so the difference is the change — but it is not an
   archive of how the site looked on a given date, and must not be described as one.
 
-The URLs will be recorded in `docs/deployments.md`, written with the first deployment.
+`docs/deployments.md` records the URLs.
 
 ### Process
 
