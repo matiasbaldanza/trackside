@@ -146,6 +146,38 @@ saying what it is, which is usually the part the reader needed.
 - Work stops at milestone boundaries for human review.
 - Changes are reviewed by the repository owner, who may perform commits directly.
 
+### Agent execution workflow
+
+Agent-assisted work separates architectural oversight from bounded implementation.
+
+The **lead agent** owns architecture, planning, task decomposition, technical decisions, review,
+and issues that require senior engineering judgement. It preserves the roadmap and the decisions
+already recorded here and in ADRs. It does not revisit completed work or settled decisions unless
+new evidence shows a concrete incompatibility.
+
+An **implementation agent** executes one bounded task at a time. It follows the patterns and
+decisions already present in the repository, makes only local implementation decisions, and
+escalates anything that would change architecture, scope, public behaviour beyond the task, or a
+recorded decision.
+
+Where delegation is useful, the lead writes a self-contained task brief before implementation:
+
+- **Objective:** one observable outcome.
+- **Affected files or directories:** the expected working set, narrow enough to avoid unnecessary
+  repository exploration.
+- **Constraints:** applicable invariants, decisions, scope boundaries, and explicit non-goals.
+- **Acceptance criteria:** facts that must be true when the task is complete.
+- **Minimal validation:** the smallest checks that provide credible evidence for those criteria.
+
+Not every change warrants delegation. The lead may implement a small or judgement-heavy task
+directly when handing it off would add more coordination than useful separation. Whether work is
+delegated or direct, the same brief is the standard for deciding its scope and completion.
+
+After an implementation task, the lead reviews the diff and the validation evidence for
+correctness, consistency, and architectural alignment before the next task begins. A tool's success
+message is not sufficient evidence; verification checks the result from the perspective that uses
+it. The repository owner remains the final reviewer at milestone boundaries.
+
 ### Precedence
 
 Guidance can conflict. When it does, this order settles it:
