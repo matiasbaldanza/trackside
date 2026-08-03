@@ -13,8 +13,7 @@ architecture, planning, decomposition, technical decisions, review, and issues r
 engineering judgement. An implementation agent receives one bounded task, follows established
 patterns, and makes only local implementation decisions.
 
-Each delegated task states its objective, affected files or directories, constraints, acceptance
-criteria, and minimal validation. The lead reviews the resulting diff and the evidence from those
+Each task, whether delegated or implemented directly by the lead, states its objective, affected files or directories, constraints, acceptance criteria, and minimal validation. The lead reviews the resulting diff and the evidence from those
 checks before starting the next task. Small or judgement-heavy changes may remain with the lead
 when delegation would add coordination without improving the review boundary.
 
@@ -80,7 +79,7 @@ This section exists because it is the useful one.
   an environment-variable invariant that its own `sanity.cli.ts` exception contradicted.
 - **Three files described read access as "bounded by dataset visibility and CORS".** CORS
   restricts browser origins; it is not a data-access control, and a public dataset is readable by
-  anyone holding the project ID over plain HTTP. The agent had *itself* demonstrated this with a
+  anyone holding the project ID over plain HTTP. The agent had _itself_ demonstrated this with a
   `curl` request while verifying the dataset was public, and then wrote the opposite in prose.
   Caught by CodeRabbit on the second review round.
 - **`docs/untracked/README.md` named `.env.local` as the single place secrets live.** True only
@@ -133,8 +132,8 @@ the id rule in the runbook, the storage format in ADR-0002.
 Two things no test would have caught, both surfaced by the repository owner opening the Studio:
 
 - **Validation errors were attached to the document rather than to fields.** The rules worked and
-  the messages were specific, but the editor saw only *"There are validation errors that need to be
-  fixed before this document can be published"* unless they opened a panel. The care taken over the
+  the messages were specific, but the editor saw only _"There are validation errors that need to be
+  fixed before this document can be published"_ unless they opened a panel. The care taken over the
   message wording was invisible in the place it mattered.
 - **Session previews truncated.** Full room names pushed the subtitle past the width of the list
   pane, and what disappeared was the duration — the part an operator most needs. Fixed by preferring
