@@ -216,12 +216,21 @@ Guidance can conflict. When it does, this order settles it:
 
 1. **Architecture Decision Records** in `docs/decisions/`.
 2. **This file.**
-3. **Vendor guidance** — Sanity's `sanity-best-practices` agent skill, and Sanity's documentation.
+3. **Vendor guidance** — Sanity's `sanity-best-practices` agent skill and Sanity's documentation;
+   Next.js's own documentation, which version 16.2 ships **bundled** at
+   `node_modules/next/dist/docs/` (`01-app/` is the App Router).
+
+**Read the bundled Next.js docs before writing Next.js code.** They are the documentation for the
+exact version installed — 16.2.12 — rather than whatever a general model learned about an earlier
+release, and App Router semantics have moved release to release. There is no substitute skill for
+this: Next.js 16.2 bundles the docs but does not generate an `AGENTS.md`, which is why this
+instruction exists here rather than being provided by the framework. Consult them for anything
+touching rendering, caching, `params`/`searchParams`, route segment config, or metadata.
 
 Vendor guidance is well-informed and worth following by default; it is not written for this
 project. Where it contradicts a recorded decision, the decision stands — ADR-0001 keeps the Studio
-embedded although the skill assumes a standalone one, and the freshness decision keeps webhook
-invalidation although the skill's Next.js guide assumes the Live Content API.
+embedded although the Sanity skill assumes a standalone one, and the freshness decision keeps
+webhook invalidation although Sanity's Next.js guide assumes the Live Content API.
 
 **A conflict is not permission to reverse a decision quietly.** If the vendor raises an argument
 the ADR did not consider, that is a new ADR superseding the old one, with the argument written
