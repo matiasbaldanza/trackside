@@ -330,14 +330,24 @@ that actually needs conveying.
 
 | Route | Rendering | Notes |
 | --- | --- | --- |
-| `/` | Dynamic | Reads `searchParams` for day, room and timezone. Data is cached; the render is per request. |
-| `/sessions/[slug]` | Static (SSG) | `generateStaticParams` prerenders one page per published session. |
+| `/` | Dynamic | Reads `searchParams` for day, room and timezone. Data is cached; the render is per request. Lives in the `(schedule)` route group. |
+| `/sessions/[slug]` | Static (SSG) | `generateStaticParams` prerenders one page per published session; `dynamicParams` stays `true`, so a session published later renders on demand. |
 | `/studio/[[...tool]]` | Static shell | The Studio itself is a client application. |
 
 The detail route stays static because it does not read `searchParams` at all. It would have had to,
 to carry the timezone preference — so instead it shows venue time and the reader's own time
 together, and isolates the one thing that genuinely needs the URL (the back link's timezone
 parameter) behind a Suspense boundary.
+
+The loading skeleton lives at `src/app/(schedule)/loading.tsx`, not at the application root, and the
+`(schedule)` route group exists for exactly that reason. A root-level `loading.tsx` places a
+Suspense boundary around every route beneath it, `/sessions/[slug]` included. Next flushes `200`
+response headers to stream that fallback before the session page's `getSession()` resolves, so a
+later `notFound()` cannot set a 404 — the status is locked once streaming starts. An unknown slug
+then returned a soft 404: the not-found UI under a `200`. Scoping the boundary to the schedule
+alone means the session route streams nothing before its `notFound()`, so an unknown slug is a true
+404. See [ADR-0007](./decisions/0007-scope-the-loading-skeleton-with-a-route-group.md). Verified
+under `next start`, since a soft 404 does not reproduce in dev.
 
 ### The timetable's markup
 
