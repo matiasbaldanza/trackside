@@ -245,6 +245,20 @@ down. Silently drifting toward a default is how a repository loses its reasoning
 - No speculative abstraction. Build for the case in front of you; generalise when a second case
   actually arrives.
 
+### Reporting register
+
+Reports to the maintainer are written in **ASD-STE100 Simplified Technical English**. A report is
+direct communication with the maintainer: chat replies, status updates, and summaries of work done.
+
+The rules are the usual STE ones. Write short sentences. State one idea in each sentence. Use the
+active voice. Use simple verb tenses. Use plain, consistent words — the same word for the same
+thing every time.
+
+This governs how the agent talks to the maintainer. **It does not change the register of the
+repository's own prose.** ADRs, `docs/`, the README and commit messages keep the documentation tone
+above; those documents persist and argue a case, so they stay in full English. The reports are read
+once and must be fast to parse. The two registers are separate on purpose.
+
 ---
 
 ## Architecture rules
