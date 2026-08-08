@@ -362,8 +362,121 @@ replaying a failed delivery.
 
 ## 9. Deployment
 
-_Unverified — Milestone 7._ Environment variables per environment, and how preview deployments
-differ from production.
+> **Verified 2026-08-02.** The first *configured* deployment succeeded on its first build. The
+> deployment Vercel starts during project import — before the variables in §9.2 exist — is a
+> separate thing and may fail; see §9.1.
+
+Vercel hosts the application and the Studio in one deployment. Production tracks `main`; each
+milestone keeps a frozen preview branch (see *Branches, tags and previews* in `AGENTS.md`).
+
+**Requires:** a Vercel account with access to the GitHub repository.
+
+### 9.1 Import the project
+
+At [vercel.com/new](https://vercel.com/new), import the repository. Next.js is detected
+automatically.
+
+**Do not override the build command.** `pnpm build` is what it detects and what is wanted.
+
+Vercel begins a deployment as soon as the project is created, which may be before the environment
+variables below exist. That first build failing is expected and harmless — deployments are
+immutable and independent, so a failed one blocks nothing and can be ignored.
+
+### 9.2 Environment variables
+
+Under **Settings → Environment Variables**, add three values, each ticked for **Production,
+Preview and Development**:
+
+| Variable | Value |
+| --- | --- |
+| `NEXT_PUBLIC_SANITY_PROJECT_ID` | `6rj0xvsm` |
+| `NEXT_PUBLIC_SANITY_DATASET` | `production` |
+| `NEXT_PUBLIC_SANITY_API_VERSION` | `2026-07-31` |
+
+No tokens. Reading published content needs no credentials, and there is deliberately no write
+token anywhere in this system — see `src/lib/env.ts`.
+
+**Preview scope is not optional.** 26 session pages are prerendered by `generateStaticParams`,
+which queries Sanity during the build, so a preview branch without these variables fails in
+`src/lib/env.ts` naming the missing one.
+
+### 9.3 Deployment protection
+
+**Settings → Deployment Protection → off.**
+
+New projects may enable Vercel Authentication on preview deployments. Left on, it puts a login
+wall in front of exactly the preview URLs that exist to be shared.
+
+### 9.4 Redeploy, if the first build ran without variables
+
+**Deployments → the deployment → ⋯ → Redeploy**, with **"Use existing Build Cache" unticked**.
+Environment variables are injected at build time, so a cached build can carry the previous state.
+
+### 9.5 Cross-origin configuration
+
+Register the production origin with Sanity, with credentials, per §3. `/studio` authenticates as
+the signed-in user from the browser, so its origin must be registered; the public schedule is
+unaffected because it renders on the server.
+
+`/studio` will **not** authenticate on preview URLs. Each preview is a distinct origin, and
+wildcarding `*.vercel.app` with credentials would let any site on that domain make authenticated
+requests against this project. Production only.
+
+### 9.6 Verify, logged out
+
+| Path | Expected |
+| --- | --- |
+| `/` | The schedule renders with real content |
+| `/sessions/apertura-nodo` | A session page renders |
+| `/?day=2026-09-25&room=laboratorio` | Filters apply |
+| `/studio` | The Studio loads and connects |
+
+**Verified 2026-08-02 against `https://trackside-events.vercel.app`:** all four returned 200, the
+schedule rendered *Nodo Conf*, *Thursday 24 September*, *Auditorio Principal* and
+*Acreditación y café*, and no CORS configuration was needed beyond §3. The pnpm `allowBuilds`
+failure anticipated for `sharp`, `esbuild` and `unrs-resolver` did not occur.
+
+Response headers confirm the intended rendering split: `/` carries
+`cache-control: private, no-cache, no-store` with `x-vercel-cache: MISS` (dynamic, per request),
+while `/sessions/[slug]` carries `x-vercel-cache: HIT` (prerendered).
+
+**Milestone 4 Preview verified 2026-08-03 against
+`https://trackside-git-preview-milestone-4-matias-baldanzas-projects.vercel.app`:** the deployment
+was created from branch `preview/milestone-4` at commit `39459d8` (Vercel deployment
+`dpl_LYQtgdCJ8u4HLfyiPhKo8gwriPQQ`). The build completed successfully in 58 seconds, detected
+Next.js `16.2.12`, used pnpm `11.17.0`, and generated all 26 session pages. The anticipated
+`ERR_PNPM_IGNORED_BUILDS` failure for `sharp`, `esbuild` and `unrs-resolver` did not occur.
+
+That branch was pushed before this Vercel project was connected to GitHub, so no automatic Preview
+deployment existed for the earlier push. The recovery was **Deployments → Create Deployment**,
+entering the full Git branch name `preview/milestone-4`, and creating the deployment from that
+existing Git reference. The frozen branch was not moved.
+
+Deployment Protection initially returned HTTP **302** to Vercel Authentication for every tested
+path. After Vercel Authentication was disabled for Preview deployments, `/`,
+`/sessions/apertura-nodo`, `/?day=2026-09-25&room=laboratorio`, and `/studio` all returned HTTP
+**200**, and the schedule rendered real Nodo Conf content including *Nodo Conf*, *Auditorio
+Principal* and *Acreditación y café*. The preview Studio is not expected to authenticate: its
+origin is intentionally absent from Sanity CORS, per §3.
+
+The build log did not print the exact Node version. Vercel deployment metadata reported
+`nodeVersion: 24.x`, and the deployed functions reported runtime `nodejs24.x`. That satisfies the
+repository's current `engines.node: ">=22"` declaration; the declaration remains floating, so
+Vercel may automatically select a later major version in a future deployment.
+
+### 9.7 Known defect — unknown session slugs return HTTP 200
+
+**Found 2026-08-02, not yet fixed.** `/sessions/does-not-exist` serves the not-found page with
+status **200**, not 404. A genuinely unrouted path such as `/nonsense-path-xyz` correctly returns
+404, so this is specific to the `[slug]` route: `x-matched-path` is `/sessions/[slug]` and
+`x-vercel-cache` is `HIT`, meaning the on-demand render of a missing slug is cached and served as
+a success.
+
+A soft 404 is indexable by search engines and invisible to uptime monitoring, so it is a real
+defect rather than a cosmetic one. The obvious fix — `export const dynamicParams = false` — is
+**not** obviously right: it would make unknown slugs 404 at the routing layer, but also make a
+session published after the last build unreachable until a redeploy, which is wrong for a
+programme that changes during an event. Needs diagnosis rather than a reflex.
 
 ## 10. Incidents
 

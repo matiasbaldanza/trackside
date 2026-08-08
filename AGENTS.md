@@ -138,7 +138,79 @@ saying what it is, which is usually the part the reader needed.
   The merge commit is the milestone boundary. `git log --first-parent` reads as one line per
   milestone; the full log still shows every atomic commit.
 
-- Tag each merged milestone: `git tag -a milestone-N -m "Milestone N — Name"`.
+- Tag each merged milestone. See below.
+
+### Branches, tags and previews
+
+**Branch names**
+
+| Pattern | For |
+| --- | --- |
+| `milestone/N-short-name` | One per milestone, one pull request |
+| `chore/…`, `fix/…`, `docs/…` | Work that is not a milestone |
+| `preview/milestone-N` | A frozen deployment pointer. Never merged, never deleted, never moved |
+
+**Pushing is the repository owner's call.** Commit freely; do not `git push`. CodeRabbit reviews
+every push, and pushing an unfinished branch spends a review pass on a state that is already
+being rewritten — the findings that matter then arrive buried among findings that were already
+fixed before they were raised.
+
+**Merge commit bodies.** GitHub generates the title line; write the body in three parts:
+
+1. What the milestone delivers, in plain terms.
+2. Which decisions it produced, naming the ADRs.
+3. What was verified — **and what was not.**
+
+The third part is not optional. `git log --first-parent` shows one commit per milestone, so for
+anyone reading `main` this body *is* the milestone. A reader who cannot tell which claims were
+measured and which were assumed has been given a summary, not a record.
+
+**Tags.** Annotated, `milestone-N`, once the merge is on `main`:
+
+```bash
+git checkout main && git pull --ff-only && git tag -a milestone-4 -m "Milestone 4 — The public schedule" && git push origin milestone-4
+```
+
+`milestones-2-and-3` predates this convention — two milestones landed in one pull request. It
+stays as it is. Retagging would break anything already pointing at it, and the irregularity is a
+true record of what happened.
+
+**Preview branches.** From Milestone 4 onward, every milestone keeps a permanently reachable
+deployment, so milestones can be compared side by side rather than described. Branch from the
+merge commit on `main` and leave it alone forever:
+
+```bash
+git branch preview/milestone-4 <merge-commit>
+git push origin preview/milestone-4      # the owner publishes; do not push automatically
+```
+
+The push is the owner's step, not the agent's — pushing is the maintainer's call (see above), and
+Vercel builds the preview from the *remote* branch, so a local branch alone produces no preview.
+
+Vercel gives every branch a stable alias, which moves only when the branch moves, so a branch that
+never moves is a permanent URL needing no deployment hash looked up and no alias assigned by hand.
+The alias is project- and team-specific and takes the form
+`<project>-git-<branch>-<account>.vercel.app`, with any slash in the branch name replaced by a
+dash. It does **not** share a stem with the production URL: the branch alias uses the bare project
+name (`trackside`), while production is served at a separate chosen alias
+(`https://trackside-events.vercel.app`). Read the exact strings from `docs/deployments.md`, never
+assume the branch alias from the production one.
+
+> **Verified 2026-08-07.** `preview/milestone-4` was pushed and its preview is reachable. The
+> mechanism held: a frozen branch keeps a stable preview URL. The observed alias is
+> `trackside-git-preview-milestone-4-<account>.vercel.app` — recorded in full in
+> `docs/deployments.md`.
+
+Two properties to keep in mind:
+
+- **The branch must never move.** A single extra commit silently repoints a URL that may already
+  have been cited somewhere outside this repository.
+- **A preview freezes the code, not the content.** Every deployment reads the live dataset, so an
+  old preview shows old code against *current* content. That is precisely what makes two previews
+  comparable — same content, different code, so the difference is the change — but it is not an
+  archive of how the site looked on a given date, and must not be described as one.
+
+`docs/deployments.md` records the URLs.
 
 ### Process
 
@@ -184,12 +256,21 @@ Guidance can conflict. When it does, this order settles it:
 
 1. **Architecture Decision Records** in `docs/decisions/`.
 2. **This file.**
-3. **Vendor guidance** — Sanity's `sanity-best-practices` agent skill, and Sanity's documentation.
+3. **Vendor guidance** — Sanity's `sanity-best-practices` agent skill and Sanity's documentation;
+   Next.js's own documentation, which version 16.2 ships **bundled** at
+   `node_modules/next/dist/docs/` (`01-app/` is the App Router).
+
+**Read the bundled Next.js docs before writing Next.js code.** They are the documentation for the
+exact version installed — 16.2.12 — rather than whatever a general model learned about an earlier
+release, and App Router semantics have moved release to release. There is no substitute skill for
+this: Next.js 16.2 bundles the docs but does not generate an `AGENTS.md`, which is why this
+instruction exists here rather than being provided by the framework. Consult them for anything
+touching rendering, caching, `params`/`searchParams`, route segment config, or metadata.
 
 Vendor guidance is well-informed and worth following by default; it is not written for this
 project. Where it contradicts a recorded decision, the decision stands — ADR-0001 keeps the Studio
-embedded although the skill assumes a standalone one, and the freshness decision keeps webhook
-invalidation although the skill's Next.js guide assumes the Live Content API.
+embedded although the Sanity skill assumes a standalone one, and the freshness decision keeps
+webhook invalidation although Sanity's Next.js guide assumes the Live Content API.
 
 **A conflict is not permission to reverse a decision quietly.** If the vendor raises an argument
 the ADR did not consider, that is a new ADR superseding the old one, with the argument written
@@ -203,6 +284,20 @@ down. Silently drifting toward a default is how a repository loses its reasoning
 - No dependency is added without a stated reason, recorded where it is introduced.
 - No speculative abstraction. Build for the case in front of you; generalise when a second case
   actually arrives.
+
+### Reporting register
+
+Reports to the maintainer are written in **ASD-STE100 Simplified Technical English**. A report is
+direct communication with the maintainer: chat replies, status updates, and summaries of work done.
+
+The rules are the usual STE ones. Write short sentences. State one idea in each sentence. Use the
+active voice. Use simple verb tenses. Use plain, consistent words — the same word for the same
+thing every time.
+
+This governs how the agent talks to the maintainer. **It does not change the register of the
+repository's own prose.** ADRs, `docs/`, the README and commit messages keep the documentation tone
+above; those documents persist and argue a case, so they stay in full English. The reports are read
+once and must be fast to parse. The two registers are separate on purpose.
 
 ---
 
