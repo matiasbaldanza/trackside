@@ -362,7 +362,9 @@ replaying a failed delivery.
 
 ## 9. Deployment
 
-> **Verified 2026-08-02.** First deployment succeeded on the first build.
+> **Verified 2026-08-02.** The first *configured* deployment succeeded on its first build. The
+> deployment Vercel starts during project import — before the variables in §9.2 exist — is a
+> separate thing and may fail; see §9.1.
 
 Vercel hosts the application and the Studio in one deployment. Production tracks `main`; each
 milestone keeps a frozen preview branch (see *Branches, tags and previews* in `AGENTS.md`).

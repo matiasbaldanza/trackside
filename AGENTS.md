@@ -181,17 +181,25 @@ merge commit on `main` and leave it alone forever:
 
 ```bash
 git branch preview/milestone-4 <merge-commit>
+git push origin preview/milestone-4      # the owner publishes; do not push automatically
 ```
 
-Vercel gives every branch a stable alias — `trackside-events-git-<branch>-<scope>.vercel.app` —
-which moves only when the branch moves, so a branch that never moves is a permanent URL needing
-no deployment hash looked up and no alias assigned by hand. Production tracks `main` and is served
-at `https://trackside-events.vercel.app`.
+The push is the owner's step, not the agent's — pushing is the maintainer's call (see above), and
+Vercel builds the preview from the *remote* branch, so a local branch alone produces no preview.
 
-> **Partly verified, 2026-08-02.** Production is deployed and confirmed. The *preview branch*
-> alias is still an expectation: `preview/milestone-4` has not been pushed, so neither the alias
-> format for a branch nor its persistence over time has been observed. Confirm on first push and
-> correct this from what actually happens.
+Vercel gives every branch a stable alias, which moves only when the branch moves, so a branch that
+never moves is a permanent URL needing no deployment hash looked up and no alias assigned by hand.
+The alias is project- and team-specific and takes the form
+`<project>-git-<branch>-<account>.vercel.app`, with any slash in the branch name replaced by a
+dash. It does **not** share a stem with the production URL: the branch alias uses the bare project
+name (`trackside`), while production is served at a separate chosen alias
+(`https://trackside-events.vercel.app`). Read the exact strings from `docs/deployments.md`, never
+assume the branch alias from the production one.
+
+> **Verified 2026-08-07.** `preview/milestone-4` was pushed and its preview is reachable. The
+> mechanism held: a frozen branch keeps a stable preview URL. The observed alias is
+> `trackside-git-preview-milestone-4-<account>.vercel.app` — recorded in full in
+> `docs/deployments.md`.
 
 Two properties to keep in mind:
 
