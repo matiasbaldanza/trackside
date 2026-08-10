@@ -42,7 +42,7 @@ analytics and compliance, not SEO.
 The loading skeleton is scoped to the schedule route with a route group. The home route and its
 loading file move into `src/app/(schedule)/`:
 
-```
+```text
 src/app/page.tsx    → src/app/(schedule)/page.tsx
 src/app/loading.tsx → src/app/(schedule)/loading.tsx
 ```
