@@ -203,10 +203,11 @@ required a manual deployment from the existing Git reference. Deployment Protect
 the Preview behind HTTP 302 authentication; disabling it made the public verification paths return
 HTTP 200.
 
-It also surfaced a defect no local check had: `/sessions/<unknown-slug>` returns HTTP 200 with the
-not-found page instead of 404. A soft 404 is indexable and invisible to monitoring. Recorded in
-runbook §9.7 rather than reflexively fixed, because the obvious remedy would make sessions
-published after a build unreachable until the next one.
+It also surfaced a defect no local check had: `/sessions/<unknown-slug>` returned HTTP 200 with the
+not-found page instead of 404. Recorded in runbook §9.7 rather than reflexively fixed, then fixed
+in ADR-0007 by scoping the loading skeleton to a route group. The first record called the soft 404
+indexable; it was not — Next marks a streamed not-found response `noindex` — so the real concern
+was uptime monitoring and analytics, not search.
 
 ---
 

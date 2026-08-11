@@ -464,19 +464,25 @@ The build log did not print the exact Node version. Vercel deployment metadata r
 repository's current `engines.node: ">=22"` declaration; the declaration remains floating, so
 Vercel may automatically select a later major version in a future deployment.
 
-### 9.7 Known defect — unknown session slugs return HTTP 200
+### 9.7 Resolved defect — unknown session slugs returned HTTP 200
 
-**Found 2026-08-02, not yet fixed.** `/sessions/does-not-exist` serves the not-found page with
-status **200**, not 404. A genuinely unrouted path such as `/nonsense-path-xyz` correctly returns
-404, so this is specific to the `[slug]` route: `x-matched-path` is `/sessions/[slug]` and
-`x-vercel-cache` is `HIT`, meaning the on-demand render of a missing slug is cached and served as
-a success.
+**Found 2026-08-02, fixed 2026-08-08 in [ADR-0007](../docs/decisions/0007-scope-the-loading-skeleton-with-a-route-group.md).**
 
-A soft 404 is indexable by search engines and invisible to uptime monitoring, so it is a real
-defect rather than a cosmetic one. The obvious fix — `export const dynamicParams = false` — is
-**not** obviously right: it would make unknown slugs 404 at the routing layer, but also make a
-session published after the last build unreachable until a redeploy, which is wrong for a
-programme that changes during an event. Needs diagnosis rather than a reflex.
+`/sessions/does-not-exist` served the not-found page with status **200**, not 404. A genuinely
+unrouted path such as `/nonsense-path-xyz` returned 404 correctly, so the fault was specific to the
+`[slug]` route. The cause was a streaming boundary: the app-root `loading.tsx` flushed the `200`
+headers before `getSession()` resolved and `notFound()` fired, and Next locks the status once
+streaming starts. The fix scopes the loading skeleton to the schedule with a route group, so the
+session route streams nothing before its not-found decision.
+
+**One belief this corrected.** This section first called the soft 404 indexable. It was not: Next
+injects `<meta name="robots" content="noindex">` into a streamed not-found response, and the docs
+confirm it is not indexed. The real concern was always narrower — HTTP status for uptime monitoring
+and analytics, which read the `200` as success.
+
+`export const dynamicParams = false` was rejected as the fix: it would 404 unknown slugs at the
+router, but also make a session published after the last build unreachable until a redeploy, which
+is wrong for a programme that changes during an event.
 
 ## 10. Incidents
 

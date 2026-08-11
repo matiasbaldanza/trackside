@@ -53,8 +53,8 @@ domain make authenticated requests against this project, so it is not done. See 
 The public schedule is unaffected on every deployment, because it reads content on the server and
 a visitor's browser never talks to the Content Lake.
 
-## Known defect
+## Resolved defect
 
-`/sessions/<unknown-slug>` returns HTTP **200** with the not-found page, rather than 404. Recorded
-with its diagnosis in runbook §9.7. Genuinely unrouted paths return 404 correctly; this is specific
-to the session route.
+`/sessions/<unknown-slug>` once returned HTTP **200** with the not-found page, rather than 404 — a
+soft 404. Fixed in [ADR-0007](./decisions/0007-scope-the-loading-skeleton-with-a-route-group.md) by
+scoping the loading skeleton to a route group, and diagnosed in runbook §9.7. It returns 404 now.
