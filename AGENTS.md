@@ -210,15 +210,21 @@ Two properties to keep in mind:
   comparable — same content, different code, so the difference is the change — but it is not an
   archive of how the site looked on a given date, and must not be described as one.
 
-**Which branches deploy.** Only two kinds of branch produce a Vercel deployment: `main`
-(production) and `preview/milestone-N` (the frozen milestone previews). Every other branch —
-`chore/…`, `fix/…`, `docs/…`, any feature branch — builds nothing. A branch under development has
-no reason to spend a build or to run against the live dataset; correctness is proven locally
-against a production build (`next start`), and a deployment is warranted only for a finished
-milestone or for production. This policy is enforced in `vercel.json` by an `ignoreCommand` that
-inspects `$VERCEL_GIT_COMMIT_REF` and cancels the build for any branch that is not `main` or
-`preview/milestone-*`. It replaces the earlier per-branch toggle, which named one branch at a time
-and left dead entries behind on merge.
+**Which branches run the application build.** Only two kinds of branch build and publish a preview:
+`main` (production) and `preview/milestone-N` (the frozen milestone previews). Every other branch —
+`chore/…`, `fix/…`, `docs/…`, any feature branch — has its build cancelled, so no preview is
+produced. A branch under development has no reason to spend a build or to run against the live
+dataset; correctness is proven locally against a production build (`next start`), and a preview is
+warranted only for a finished milestone or for production. This policy is enforced in `vercel.json`
+by an `ignoreCommand` that inspects `$VERCEL_GIT_COMMIT_REF` and cancels the build for any branch
+that is not `main` or `preview/milestone-*`. It replaces the earlier per-branch toggle, which named
+one branch at a time and left dead entries behind on merge.
+
+Note the exact mechanism, because it is not "no deployment." `ignoreCommand` runs *inside* a
+claimed build, so a cancelled branch still creates a Vercel deployment record with `CANCELED`
+status, and that record counts toward the deployment quota and occupies a build slot while the
+command runs. What it saves is the expensive part — the application build itself does not run, and
+nothing is published. That is the whole benefit; the deployment record is the small residue.
 
 `docs/deployments.md` records the URLs.
 
