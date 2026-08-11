@@ -20,6 +20,7 @@ Use [`TEMPLATE.md`](./TEMPLATE.md) for new records.
 | [0004](./0004-derive-fixture-document-ids-from-slugs.md) | Derive fixture document ids from slugs | Accepted | 2026-08-01 |
 | [0005](./0005-render-the-timetable-as-one-chronological-list.md) | Render the timetable as one chronological list, laid out two ways | Accepted | 2026-08-01 |
 | [0006](./0006-confine-sanity-access-to-one-directory.md) | Confine Sanity access to one directory, behind view models | Accepted | 2026-08-02 |
+| [0007](./0007-scope-the-loading-skeleton-with-a-route-group.md) | Scope the loading skeleton with a route group, so unknown sessions return a true 404 | Accepted | 2026-08-05 |
 
 ## Decisions expected but not yet made
 
